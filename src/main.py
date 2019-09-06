@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import acovf, acf
@@ -16,7 +18,9 @@ noise2 = noise(t.size)
 
 plt_noise(t, noise1, noise2)
 
-ou1 = ou(noise1, 2, 0)
+ou1 = ou(np.dstack((t, noise1))[0], 0.1, 10)
+ou1 = ou1[:, 1]
+print(ou1)
 # print(ou1)
 plt_ou(t, ou1)
 print(np.average(ou1))
@@ -26,3 +30,4 @@ axs[0].plot(acf(noise1))
 axs[1].plot(acf(ou1))
 plt.show()
 
+os._exit(0)
