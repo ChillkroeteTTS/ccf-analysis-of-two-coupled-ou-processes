@@ -8,6 +8,7 @@ from mixedNoiseOu import mixed_noise_ou
 from noise import white_noise
 from ou import ou
 from plotting.plotting import plt_noise, plt_ou, plt_acf
+from stats import normalized_correlation
 
 T = 1 # delay
 R = 1000 # resolution
@@ -35,11 +36,15 @@ plt_ou(t, ou1, ou2)
 lags = 1000
 plt_acf(acf(ou1, nlags=lags), acf(ou2, nlags=lags))
 # my_ccf = [np.correlate(ou1, np.roll(ou2, int(t))) for t in np.arange(round(R/2-5), round(R/2+5), 1)]
-my_ccf = [np.correlate(ou1, np.roll(ou2, int(t))) for t in np.arange(round(R/2-1000), round(R/2+1000), 1)]
+w = 500
+shifts = np.arange(round(R / 2 - w), round(R / 2 + w), 1)
+my_ccf = normalized_correlation(ou1, ou2, shifts)
 
 fig = plt.figure()
 plt.suptitle('Cross Correlation Function')
-plt.plot(my_ccf)
+plt.plot(shifts, my_ccf)
+plt.xlabel('shift')
+plt.ylabel('correlation')
 plt.show()
 
 os._exit(0)
