@@ -26,4 +26,7 @@ def plt_acf(y1, y2):
     axs[1].plot(y2)
     axs[0].legend(['ACF of ou1'])
     axs[1].legend(['ACF of ou2'])
+    for ax in axs.flat:
+        ax.axhline(0, linestyle='--', color='red')
+    plt.tight_layout()
     plt.show()

@@ -40,5 +40,6 @@ my_ccf = [np.correlate(ou1, np.roll(ou2, int(t))) for t in np.arange(round(R/2-1
 fig = plt.figure()
 plt.suptitle('Cross Correlation Function')
 plt.plot(my_ccf)
+plt.show()
 
 os._exit(0)
