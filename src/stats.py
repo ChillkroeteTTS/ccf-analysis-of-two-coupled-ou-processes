@@ -1,5 +1,10 @@
 import numpy as np
 
+from statsmodels.tsa.stattools import acf
+
+from noise import white_noise
+from ou import ou, mixed_noise_ou
+
 
 def normalize(ts):
     return (ts - np.mean(ts)) / np.std(ts)
@@ -11,3 +16,41 @@ def normalized_correlation(ts1, ts2, shifts):
     normalized_ts2 = normalize(ts2)
     return [np.correlate(normalized_ts1, np.roll(normalized_ts2, int(shift)))
             for shift in shifts]
+
+def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
+    t1 = round(R / T_cycles)
+
+    noise = white_noise
+
+    noise1 = noise(t.size)
+    noise2 = noise(t.size)
+
+    ou1 = ou(np.dstack((t, noise1))[0], tau1, initial_condition)
+    ou1 = ou1[:, 2]
+
+    ou2 = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
+
+    print('intesity ou1')
+    print(np.var(ou1))
+    print('intesity ou2')
+    print(np.var(ou2[t1:]))
+
+    lags = 20
+    acf_ou1 = acf(ou1, nlags=lags)
+    acf_ou2 = acf(ou2, nlags=lags)
+
+    w = 15
+    ccf_shifts = np.arange(round(R / 2 - w), round(R / 2 + w), 1)
+    ccf = normalized_correlation(ou1, ou2, ccf_shifts)
+
+    return {
+        'noise1': noise1,
+        'noise2': noise2,
+        'ou1': ou1,
+        'ou2': ou2,
+        'acf_ou1': acf_ou1,
+        'acf_ou2': acf_ou2,
+        'ccf_shifts': ccf_shifts,
+        'ccf': ccf
+    }
+

@@ -2,13 +2,8 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import acovf, acf, ccf
-
-from mixedNoiseOu import mixed_noise_ou
-from noise import white_noise
-from ou import ou
 from plotting.plotting import plt_noise, plt_ou, plt_acf
-from stats import normalized_correlation
+from stats import delayed_ou_processes
 
 T = 1 # delay
 R = 1000 # resolution
@@ -20,31 +15,23 @@ tau2 = tau
 e = 0.5
 initial_condition = 0
 
-noise = white_noise
-
-noise1 = noise(t.size)
-noise2 = noise(t.size)
+res = delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition)
+noise1 = res['noise1']
+noise2 = res['noise2']
+ou1 = res['ou1']
+ou2 = res['ou2']
+acf_ou1 = res['acf_ou1']
+acf_ou2 = res['acf_ou2']
+ccf = res['ccf']
+ccf_shifts = res['ccf_shifts']
 
 plt_noise(t, noise1, noise2)
-
-ou1 = ou(np.dstack((t, noise1))[0], tau1, initial_condition)
-ou1 = ou1[:, 2]
-
-ou2 = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
-
 plt_ou(t, ou1, ou2)
-
-lags = 20
-plt_acf(acf(ou1, nlags=lags), acf(ou2, nlags=lags))
-# my_ccf = [np.correlate(ou1, np.roll(ou2, int(t))) for t in np.arange(round(R/2-5), round(R/2+5), 1)]
-w = 5
-shifts = np.arange(round(R / 2 - w), round(R / 2 + w), 1)
-t1 = round(R / T_cycles)
-my_ccf = normalized_correlation(ou1, ou2, shifts)
+plt_acf(acf_ou1, acf_ou2)
 
 fig = plt.figure()
 plt.suptitle('Cross Correlation Function')
-plt.plot(shifts, my_ccf)
+plt.plot(ccf_shifts, ccf)
 plt.xlabel('shift')
 plt.ylabel('correlation')
 plt.show()
