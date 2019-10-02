@@ -36,7 +36,7 @@ def plt_acf(y1, y2):
     plt.tight_layout()
     plt.show()
 
-def plt_time_series(params, ts, ys, title, labels=[]):
+def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel=''):
     cols = 3
     rows = int(np.ceil(len(ts)/cols))
     print(str(cols) + ' cols')
@@ -55,8 +55,8 @@ def plt_time_series(params, ts, ys, title, labels=[]):
         axs[r][c].title.set_text(f"e: {params[i]['e']}, tau: {params[i]['tau1']}")
         if showLabels:
             axs[r][c].legend(loc="upper right")
-        axs[r][c].set_xlabel('shift')
-        axs[r][c].set_ylabel('correlation')
+        axs[r][c].set_xlabel(xlabel)
+        axs[r][c].set_ylabel(ylabel)
 
     st = fig.suptitle(title, size=16)
     plt.tight_layout()

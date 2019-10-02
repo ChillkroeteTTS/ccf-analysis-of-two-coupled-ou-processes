@@ -15,7 +15,7 @@ tau1 = tau
 tau2 = tau
 e = 0.5
 initial_condition = 0
-ensemble_runs = 5
+ensemble_runs = 100
 
 params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': NoiseType.WHITE, 'gamma1': 0.5, 'gamma2': 0.5},
@@ -29,13 +29,13 @@ params = [
 
 results = [delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], initial_condition, ensemble_runs) for p in params]
 
-plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], 'CCF')
+plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], '', xlabel='lag', ylabel='CCF')
 
 acf_t = np.arange(0,results[0]['acf_lags']+1)
 plt_time_series(params,
                 [[acf_t, acf_t] for r in results],
                 [[r['acf_ou1'], r['acf_ou2']] for r in results],
-                'ACF',
-                labels=['ou1', 'mixed ou'])
+                '',
+                labels=['ou1', 'mixed ou'], xlabel='lag', ylabel='ACF')
 
 os._exit(0)
