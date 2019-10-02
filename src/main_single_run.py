@@ -3,7 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from plotting.plotting import plt_noise, plt_ou, plt_acf
-from stats import delayed_ou_processes
+from stats import delayed_ou_processes_ensemble
 
 T = 1 # delay
 R = 1000 # resolution
@@ -15,7 +15,7 @@ tau2 = tau
 e = 0.5
 initial_condition = 0
 
-res = delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition)
+res = delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_condition)
 noise1 = res['noise1']
 noise2 = res['noise2']
 ou1 = res['ou1']

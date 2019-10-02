@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from noise import NoiseType
 from plotting.plotting import plt_noise, plt_ou, plt_acf
-from stats import delayed_ou_processes
+from stats import delayed_ou_processes_ensemble
 
 T = 1  # delay
 R = 1000  # resolution
@@ -29,7 +29,7 @@ params = [
     {'e': 0.5, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': NoiseType.WHITE, 'gamma1': 0.5, 'gamma2': 0.5},
 ]
 
-results = [delayed_ou_processes(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], initial_condition) for p in params]
+results = [delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], initial_condition) for p in params]
 
 cols = 3
 rows = int(np.ceil(len(results)/cols))

@@ -18,8 +18,6 @@ def normalized_correlation(ts1, ts2, shifts):
             for shift in shifts]
 
 def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
-    t1 = round(R / T_cycles)
-
     noise = white_noise
 
     noise1 = noise(t.size)
@@ -29,11 +27,6 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
     ou1 = ou1[:, 2]
 
     ou2 = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
-
-    print('intesity ou1')
-    print(np.var(ou1))
-    print('intesity ou2')
-    print(np.var(ou2[t1:]))
 
     lags = 20
     acf_ou1 = acf(ou1, nlags=lags)
@@ -52,5 +45,29 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
         'acf_ou2': acf_ou2,
         'ccf_shifts': ccf_shifts,
         'ccf': ccf
+    }
+
+def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_condition, ensemble_count=100):
+    t1 = round(R / T_cycles)
+    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition) for _ in range(0, 100)]
+
+    average_ensemble = lambda e: np.mean(e, axis=0)
+
+    ou1_ensemble = np.array([run['ou1'] for run in runs])
+    ou2_ensemble = np.array([run['ou2'] for run in runs])
+    print('intensity ou1')
+    print(np.mean([np.var(ou) for ou in ou1_ensemble]))
+    print('intensity ou2')
+    # print([np.var([ou[t1:]) for ou in ou2_ensemble])
+
+    return {
+        'noise1': np.array([run['noise1'] for run in runs]),
+        'noise2': np.array([run['noise2'] for run in runs]),
+        'ou1': ou1_ensemble,
+        'ou2': ou2_ensemble,
+        'acf_ou1': average_ensemble(np.array([run['acf_ou1'] for run in runs])),
+        'acf_ou2': average_ensemble(np.array([run['acf_ou2'] for run in runs])),
+        'ccf_shifts': runs[0]['ccf_shifts'],
+        'ccf': average_ensemble(np.array([run['ccf'] for run in runs])),
     }
 
