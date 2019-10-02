@@ -55,10 +55,10 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_conditi
 
     ou1_ensemble = np.array([run['ou1'] for run in runs])
     ou2_ensemble = np.array([run['ou2'] for run in runs])
-    print('intensity ou1')
-    print(np.mean([np.var(ou) for ou in ou1_ensemble]))
-    print('intensity ou2')
-    # print([np.var([ou[t1:]) for ou in ou2_ensemble])
+    mean_var_ou1 = np.mean([np.var(ou) for ou in ou1_ensemble])
+    mean_var_ou2 = np.mean([np.var(ou[t1:]) for ou in ou2_ensemble])
+    print('intesity deviation from 1 of ou1 | ou2')
+    print(str(np.abs(mean_var_ou1 - 1)) + ' | ' + str(np.abs(mean_var_ou2 - 1)))
 
     return {
         'noise1': np.array([run['noise1'] for run in runs]),
