@@ -41,15 +41,16 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
         'noise2': noise2,
         'ou1': ou1,
         'ou2': ou2,
+        'acf_lags': lags,
         'acf_ou1': acf_ou1,
         'acf_ou2': acf_ou2,
         'ccf_shifts': ccf_shifts,
-        'ccf': ccf
+        'ccf': ccf,
     }
 
-def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_condition, ensemble_count=100):
+def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_condition, ensemble_count):
     t1 = round(R / T_cycles)
-    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition) for _ in range(0, 100)]
+    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition) for _ in range(0, ensemble_count)]
 
     average_ensemble = lambda e: np.mean(e, axis=0)
 
@@ -67,6 +68,7 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_conditi
         'ou2': ou2_ensemble,
         'acf_ou1': average_ensemble(np.array([run['acf_ou1'] for run in runs])),
         'acf_ou2': average_ensemble(np.array([run['acf_ou2'] for run in runs])),
+        'acf_lags': runs[0]['acf_lags'],
         'ccf_shifts': runs[0]['ccf_shifts'],
         'ccf': average_ensemble(np.array([run['ccf'] for run in runs])),
     }

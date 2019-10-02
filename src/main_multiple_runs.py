@@ -1,12 +1,9 @@
 import os
-from enum import Enum
-from math import floor
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from noise import NoiseType
-from plotting.plotting import plt_noise, plt_ou, plt_acf
+from plotting.plotting import plt_noise, plt_ou, plt_acf, plt_time_series
 from stats import delayed_ou_processes_ensemble
 
 T = 1  # delay
@@ -18,6 +15,7 @@ tau1 = tau
 tau2 = tau
 e = 0.5
 initial_condition = 0
+ensemble_runs = 5
 
 params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': NoiseType.WHITE, 'gamma1': 0.5, 'gamma2': 0.5},
@@ -29,47 +27,15 @@ params = [
     {'e': 0.5, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': NoiseType.WHITE, 'gamma1': 0.5, 'gamma2': 0.5},
 ]
 
-results = [delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], initial_condition) for p in params]
+results = [delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], initial_condition, ensemble_runs) for p in params]
 
-cols = 3
-rows = int(np.ceil(len(results)/cols))
-print(str(cols) + ' cols')
-print(str(rows) + ' rows')
-fig, axs = plt.subplots(rows, cols, sharey=True)
+plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], 'CCF')
 
-fig.suptitle('CCF')
-for i, res in enumerate(results):
-    r = int(floor(i / cols))
-    c = int(i % cols)
-    ccf = res['ccf']
-    ccf_shifts = res['ccf_shifts']
-
-    axs[r][c].plot(ccf_shifts, ccf, label=f"e: {params[i]['e']}, tau: {params[i]['tau1']}")
-    axs[r][c].legend(loc="upper right")
-    axs[r][c].set_xlabel('shift')
-    axs[r][c].set_ylabel('correlation')
-
-plt.show()
-
-# res = delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition)
-# noise1 = res['noise1']
-# noise2 = res['noise2']
-# ou1 = res['ou1']
-# ou2 = res['ou2']
-# acf_ou1 = res['acf_ou1']
-# acf_ou2 = res['acf_ou2']
-# ccf = res['ccf']
-# ccf_shifts = res['ccf_shifts']
-#
-# plt_noise(t, noise1, noise2)
-# plt_ou(t, ou1, ou2)
-# plt_acf(acf_ou1, acf_ou2)
-#
-# fig = plt.figure()
-# plt.suptitle('Cross Correlation Function')
-# plt.plot(ccf_shifts, ccf)
-# plt.xlabel('shift')
-# plt.ylabel('correlation')
-# plt.show()
+acf_t = np.arange(0,results[0]['acf_lags']+1)
+plt_time_series(params,
+                [[acf_t, acf_t] for r in results],
+                [[r['acf_ou1'], r['acf_ou2']] for r in results],
+                'ACF',
+                labels=['ou1', 'mixed ou'])
 
 os._exit(0)

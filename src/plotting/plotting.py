@@ -1,4 +1,9 @@
+import numpy as np
+
 import matplotlib.pyplot as plt
+import matplotlib as mlp
+
+mlp.rcParams['figure.autolayout'] = False
 
 def plt_noise(t, noise1, noise2):
     fig, axs = plt.subplots(2,1)
@@ -29,4 +34,31 @@ def plt_acf(y1, y2):
     for ax in axs.flat:
         ax.axhline(0, linestyle='--', color='red')
     plt.tight_layout()
+    plt.show()
+
+def plt_time_series(params, ts, ys, title, labels=[]):
+    cols = 3
+    rows = int(np.ceil(len(ts)/cols))
+    print(str(cols) + ' cols')
+    print(str(rows) + ' rows')
+    fig, axs = plt.subplots(rows, cols, sharey=True)
+
+    for i, [t, y] in enumerate(zip(ts, ys)):
+        r = int(np.floor(i / cols))
+        c = int(i % cols)
+
+        showLabels = len(labels) > 0
+        for j, _ in enumerate(t):
+            label = labels[j] if showLabels else ''
+            axs[r][c].plot(t[j], y[j], label=label)
+
+        axs[r][c].title.set_text(f"e: {params[i]['e']}, tau: {params[i]['tau1']}")
+        if showLabels:
+            axs[r][c].legend(loc="upper right")
+        axs[r][c].set_xlabel('shift')
+        axs[r][c].set_ylabel('correlation')
+
+    st = fig.suptitle(title, size=16)
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.88)
     plt.show()
