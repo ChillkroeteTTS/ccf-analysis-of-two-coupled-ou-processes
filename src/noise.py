@@ -1,3 +1,4 @@
+import functools
 from enum import Enum
 
 import numpy as np
@@ -8,3 +9,11 @@ class NoiseType(Enum):
 
 def white_noise(n):
     return np.random.rand(n)*2 - 1
+
+def red_noise(r, n):
+    noise = white_noise(n)
+
+    for i in range(1, len(noise)):
+        noise[i] = r * noise[i-1] + np.sqrt(1 - np.power(r, 2)) * noise[i]
+
+    return noise

@@ -1,8 +1,10 @@
+import functools
+
 import numpy as np
 
 from statsmodels.tsa.stattools import acf
 
-from noise import white_noise
+from noise import white_noise, NoiseType, red_noise
 from ou import ou, mixed_noise_ou
 
 
@@ -17,8 +19,8 @@ def normalized_correlation(ts1, ts2, shifts):
     return [np.correlate(normalized_ts1, np.roll(normalized_ts2, int(shift)))
             for shift in shifts]
 
-def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
-    noise = white_noise
+def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition):
+    noise = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
 
     noise1 = noise(t.size)
     noise2 = noise(t.size)
@@ -48,9 +50,10 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition):
         'ccf': ccf,
     }
 
-def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, initial_condition, ensemble_count):
+
+def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition, ensemble_count):
     t1 = round(R / T_cycles)
-    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, initial_condition) for _ in range(0, ensemble_count)]
+    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in range(0, ensemble_count)]
 
     average_ensemble = lambda e: np.mean(e, axis=0)
 

@@ -41,7 +41,7 @@ def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel=''):
     rows = int(np.ceil(len(ts)/cols))
     print(str(cols) + ' cols')
     print(str(rows) + ' rows')
-    fig, axs = plt.subplots(rows, cols, sharey=True)
+    fig, axs = plt.subplots(rows, cols, sharey=True, figsize=[12, 12])
 
     for i, [t, y] in enumerate(zip(ts, ys)):
         r = int(np.floor(i / cols))
