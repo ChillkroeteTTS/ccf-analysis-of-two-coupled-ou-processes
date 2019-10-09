@@ -8,7 +8,7 @@ class NoiseType(Enum):
     RED = 2
 
 def white_noise(n):
-    return np.random.rand(n)*2 - 1
+    return np.random.normal(0, 1, n)*2 - 1
 
 def red_noise(r, n):
     noise = white_noise(n)

@@ -18,6 +18,8 @@ def normalized_correlation(ts1, ts2, shifts):
     normalized_ts2 = normalize(ts2)
     return [np.correlate(normalized_ts1, np.roll(normalized_ts2, int(shift)))
             for shift in shifts]
+    # return [np.correlate(ts1, np.roll(ts2, int(shift)))
+    #         for shift in shifts] * (1/np.sqrt(np.var(ts1)*np.var(ts2)))
 
 def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition):
     noise = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])

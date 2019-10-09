@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from noise import NoiseType
-from plotting.plotting import plt_time_series
+from plotting.plotting import plt_time_series, plt_ou
 from stats import delayed_ou_processes_ensemble
 
 T = 1  # delay
@@ -15,7 +15,7 @@ tau1 = tau
 tau2 = tau
 e = 0.5
 initial_condition = 0
-ensemble_runs = 120
+ensemble_runs = 100
 
 params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE, 'gamma1': 0.5, 'gamma2': 0.5}},
@@ -36,6 +36,11 @@ params = [
 ]
 
 results = [delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], p['noiseType'], initial_condition, ensemble_runs) for p in params]
+
+res_zero = results[0]
+plt_ou(t, res_zero['ou1'][0], res_zero['ou2'][0])
+res_zero = results[6]
+plt_ou(t, res_zero['ou1'][0], res_zero['ou2'][0])
 
 plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], '', xlabel='lag', ylabel='CCF')
 
