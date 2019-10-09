@@ -39,8 +39,6 @@ def plt_acf(y1, y2):
 def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel=''):
     cols = 3
     rows = int(np.ceil(len(ts)/cols))
-    print(str(cols) + ' cols')
-    print(str(rows) + ' rows')
     fig, axs = plt.subplots(rows, cols, sharey=True, figsize=[12, 12])
 
     for i, [t, y] in enumerate(zip(ts, ys)):

@@ -1,10 +1,13 @@
 import os
+import time
 
 import numpy as np
 
 from noise import NoiseType
 from plotting.plotting import plt_time_series, plt_ou
 from stats import delayed_ou_processes_ensemble
+
+start_time = time.perf_counter()
 
 T = 1  # delay
 R = 1000  # resolution
@@ -51,4 +54,7 @@ plt_time_series(params,
                 '',
                 labels=['ou1', 'mixed ou'], xlabel='lag', ylabel='ACF')
 
+
+took = time.perf_counter() - start_time
+print(f"It took {took}ms to finish calculations")
 os._exit(0)
