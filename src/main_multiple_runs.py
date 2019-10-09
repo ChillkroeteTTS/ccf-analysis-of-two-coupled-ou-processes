@@ -50,15 +50,16 @@ results = pool.map(wrapped_delayed_processes, params)
 
 plt_samples(t, round(R / T_cycles), results)
 
-plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], '', xlabel='lag',
-                ylabel='CCF')
-
 acf_t = np.arange(0, results[0]['acf_lags'] + 1)
 plt_time_series(params,
                 [[acf_t, acf_t] for r in results],
                 [[r['acf_ou1'], r['acf_ou2']] for r in results],
                 '',
                 labels=['ou1', 'mixed ou'], xlabel='lag', ylabel='ACF')
+
+plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], '', xlabel='lag',
+                ylabel='CCF')
+
 
 took = time.perf_counter() - start_time
 print(f"It took {took}ms to finish calculations")

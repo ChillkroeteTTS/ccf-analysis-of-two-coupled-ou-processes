@@ -56,7 +56,7 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
 def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition, ensemble_count):
     runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in range(0, ensemble_count)]
 
-    average_ensemble = lambda e: np.mean(e, axis=0)
+    average_ensemble = lambda e: np.median(e, axis=0)
 
     return {
         'noise1': np.array([run['noise1'] for run in runs]),
