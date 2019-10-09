@@ -4,8 +4,9 @@ import time
 import numpy as np
 
 from noise import NoiseType
-from plotting.plotting import plt_time_series, plt_ou
+from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_samples
 from stats import delayed_ou_processes_ensemble
+import multiprocessing as mp
 
 start_time = time.perf_counter()
 
@@ -18,7 +19,7 @@ tau1 = tau
 tau2 = tau
 e = 0.5
 initial_condition = 0
-ensemble_runs = 100
+ensemble_runs = 50
 
 params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE, 'gamma1': 0.5, 'gamma2': 0.5}},
@@ -38,22 +39,26 @@ params = [
     {'e': 0.5, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
 ]
 
-results = [delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], p['noiseType'], initial_condition, ensemble_runs) for p in params]
 
-res_zero = results[0]
-plt_ou(t, res_zero['ou1'][0], res_zero['ou2'][0])
-res_zero = results[6]
-plt_ou(t, res_zero['ou1'][0], res_zero['ou2'][0])
+def wrapped_delayed_processes(p):
+    return delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], p['noiseType'],
+                                         initial_condition, ensemble_runs)
 
-plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], '', xlabel='lag', ylabel='CCF')
+# parallelized simulation
+pool = mp.Pool(processes=8)
+results = pool.map(wrapped_delayed_processes, params)
 
-acf_t = np.arange(0,results[0]['acf_lags']+1)
+plt_samples(t, results)
+
+plt_time_series(params, [[r['ccf_shifts']] for r in results], [[r['ccf']] for r in results], '', xlabel='lag',
+                ylabel='CCF')
+
+acf_t = np.arange(0, results[0]['acf_lags'] + 1)
 plt_time_series(params,
                 [[acf_t, acf_t] for r in results],
                 [[r['acf_ou1'], r['acf_ou2']] for r in results],
                 '',
                 labels=['ou1', 'mixed ou'], xlabel='lag', ylabel='ACF')
-
 
 took = time.perf_counter() - start_time
 print(f"It took {took}ms to finish calculations")

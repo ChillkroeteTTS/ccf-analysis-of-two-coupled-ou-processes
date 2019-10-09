@@ -46,6 +46,4 @@ def mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, inital_condition):
 
     ou2 = ou(partitioned_noise, tau2, inital_condition)
 
-    # zero pre padding for same dimensions of ou1 and ou2
-    # return np.concatenate((np.full(i_t_1, 0), ou2[:, 2]))
-    return ou2[:, 2]
+    return [ou2_noise, ou2[:, 2]]

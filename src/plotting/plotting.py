@@ -5,23 +5,44 @@ import matplotlib as mlp
 
 mlp.rcParams['figure.autolayout'] = False
 
-def plt_noise(t, noise1, noise2):
-    fig, axs = plt.subplots(2,1)
-    fig.suptitle('generated noise')
-    plt_2_graphs_with_same_axis(fig, axs, t, noise1, noise2)
+def plt_samples(t, results):
+    res_zero = results[0]
+    legend = ['ou', 'underlying noise (white)']
+    plt_2_graphs_with_same_axis(t, [res_zero['ou1'][0], res_zero['noise1'][0]],
+                                [res_zero['ou2'][0], res_zero['noise2'][0]],
+                                title1='OU Sample (Default)',
+                                title2='OU Sample (Delayed)',
+                                xlabel='t',
+                                legends=[['ou', 'underlying noise (white)'], []])
+    res_zero = results[6]
+    plt_2_graphs_with_same_axis(t,
+                                [res_zero['ou1'][0], res_zero['noise1'][0]],
+                                [res_zero['ou2'][0], res_zero['noise2'][0]],
+                                title1='OU Sample (Default)',
+                                title2='OU Sample (Delayed)',
+                                xlabel='t',
+                                legends=[['ou', 'underlying noise (red)'], []])
 
-def plt_ou(t, ou1, ou2):
-    fig, axs = plt.subplots(2,1)
-    fig.suptitle('Ohrnstein Uhlenbeck processes')
-    plt_2_graphs_with_same_axis(fig, axs, t, ou1, ou2, legends=[['ou1'], ['ou2 (mixed)']])
 
-def plt_2_graphs_with_same_axis(fig, axs, t, y1, y2, xlabel='', ylabel='', legends=[[], []]):
-    axs[0].plot(t, y1)
-    axs[1].plot(t, y2)
-    axs[0].legend(legends[0])
-    axs[1].legend(legends[1])
+def plt_2_graphs_with_same_axis(t, y1s, y2s, xlabel='', ylabel='', legends=[[], []], title1='', title2=''):
+    fig, axs = plt.subplots(2,1)
+
+    for y1 in y1s:
+        axs[0].plot(t, y1)
+    for y2 in y2s:
+        axs[1].plot(t, y2)
+
+    if (len(legends[0]) > 0):
+        axs[0].legend(legends[0])
+
+    if (len(legends[1]) > 0):
+        axs[1].legend(legends[1])
+
+    axs[0].title.set_text(title1)
+    axs[1].title.set_text(title2)
+
     for ax in axs.flat:
-        ax.set(xlabel='t', ylabel='noise')
+        ax.set(xlabel=xlabel, ylabel=ylabel)
     plt.show()
 
 def plt_acf(y1, y2):

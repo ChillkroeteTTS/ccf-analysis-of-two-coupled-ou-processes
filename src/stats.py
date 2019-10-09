@@ -30,7 +30,7 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
     ou1 = ou(np.dstack((t, noise1))[0], tau1, initial_condition)
     ou1 = ou1[:, 2]
 
-    ou2 = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
+    [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
 
     lags = 20
     acf_ou1 = acf(ou1, nlags=lags)
@@ -42,7 +42,7 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
 
     return {
         'noise1': noise1,
-        'noise2': noise2,
+        'noise2': mixed_noise,
         'ou1': ou1,
         'ou2': ou2,
         'acf_lags': lags,
