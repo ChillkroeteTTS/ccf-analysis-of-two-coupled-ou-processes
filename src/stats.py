@@ -54,27 +54,18 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
 
 
 def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition, ensemble_count):
-    t1 = round(R / T_cycles)
     runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in range(0, ensemble_count)]
 
     average_ensemble = lambda e: np.mean(e, axis=0)
 
-    ou1_ensemble = np.array([run['ou1'] for run in runs])
-    ou2_ensemble = np.array([run['ou2'] for run in runs])
-    mean_var_ou1 = np.mean([np.var(ou) for ou in ou1_ensemble])
-    mean_var_ou2 = np.mean([np.var(ou[t1:]) for ou in ou2_ensemble])
-    print('intesity deviation from 1 of ou1 | ou2')
-    print(str(np.abs(mean_var_ou1 - 1)) + ' | ' + str(np.abs(mean_var_ou2 - 1)))
-
     return {
         'noise1': np.array([run['noise1'] for run in runs]),
-        'noise2': np.array([run['noise2'] for run in runs]),
-        'ou1': ou1_ensemble,
-        'ou2': ou2_ensemble,
+        'noise2': (np.array([run['noise2'] for run in runs])),
+        'ou1': np.array([run['ou1'] for run in runs]),
+        'ou2': np.array([run['ou2'] for run in runs]),
         'acf_ou1': average_ensemble(np.array([run['acf_ou1'] for run in runs])),
         'acf_ou2': average_ensemble(np.array([run['acf_ou2'] for run in runs])),
         'acf_lags': runs[0]['acf_lags'],
         'ccf_shifts': runs[0]['ccf_shifts'],
         'ccf': average_ensemble(np.array([run['ccf'] for run in runs])),
     }
-

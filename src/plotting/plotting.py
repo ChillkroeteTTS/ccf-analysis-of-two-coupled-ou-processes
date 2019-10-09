@@ -5,15 +5,18 @@ import matplotlib as mlp
 
 mlp.rcParams['figure.autolayout'] = False
 
-def plt_samples(t, results):
+def plt_samples(t,t1, results):
     res_zero = results[0]
-    legend = ['ou', 'underlying noise (white)']
+    default_noise_intensity = np.median([np.var(n[t1:]) for n in res_zero['noise1']])
+    mixed_noise_intensity = np.median([np.var(n[t1:]) for n in res_zero['noise2']])
+
     plt_2_graphs_with_same_axis(t, [res_zero['ou1'][0], res_zero['noise1'][0]],
                                 [res_zero['ou2'][0], res_zero['noise2'][0]],
                                 title1='OU Sample (Default)',
                                 title2='OU Sample (Delayed)',
                                 xlabel='t',
-                                legends=[['ou', 'underlying noise (white)'], []])
+                                legends=[['ou', f'white noise (intensity: {default_noise_intensity:.2f})'],
+                                         ['ou', f'white noise (intensity: {mixed_noise_intensity:.2f})']])
     res_zero = results[6]
     plt_2_graphs_with_same_axis(t,
                                 [res_zero['ou1'][0], res_zero['noise1'][0]],
@@ -21,11 +24,12 @@ def plt_samples(t, results):
                                 title1='OU Sample (Default)',
                                 title2='OU Sample (Delayed)',
                                 xlabel='t',
-                                legends=[['ou', 'underlying noise (red)'], []])
+                                legends=[['ou', f'red noise (intensity: {default_noise_intensity:.2f})'],
+                                         ['ou', f'red noise (intensity: {mixed_noise_intensity:.2f})']])
 
 
 def plt_2_graphs_with_same_axis(t, y1s, y2s, xlabel='', ylabel='', legends=[[], []], title1='', title2=''):
-    fig, axs = plt.subplots(2,1)
+    fig, axs = plt.subplots(2,1, figsize=[12,12])
 
     for y1 in y1s:
         axs[0].plot(t, y1)
@@ -33,10 +37,10 @@ def plt_2_graphs_with_same_axis(t, y1s, y2s, xlabel='', ylabel='', legends=[[], 
         axs[1].plot(t, y2)
 
     if (len(legends[0]) > 0):
-        axs[0].legend(legends[0])
+        axs[0].legend(legends[0], loc='upper right')
 
     if (len(legends[1]) > 0):
-        axs[1].legend(legends[1])
+        axs[1].legend(legends[1], loc='upper right')
 
     axs[0].title.set_text(title1)
     axs[1].title.set_text(title2)
@@ -60,6 +64,7 @@ def plt_acf(y1, y2):
 def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel=''):
     cols = 3
     rows = int(np.ceil(len(ts)/cols))
+    plt.subplots_adjust(top=2)
     fig, axs = plt.subplots(rows, cols, sharey=True, figsize=[12, 12])
 
     for i, [t, y] in enumerate(zip(ts, ys)):
@@ -77,7 +82,9 @@ def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel=''):
         axs[r][c].set_xlabel(xlabel)
         axs[r][c].set_ylabel(ylabel)
 
+    plt.subplots_adjust(top=2)
     st = fig.suptitle(title, size=16)
+    plt.subplots_adjust(top=2)
     plt.tight_layout()
-    plt.subplots_adjust(top=0.88)
+    plt.subplots_adjust(top=2)
     plt.show()
