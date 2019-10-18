@@ -63,18 +63,29 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
     runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in range(0, ensemble_count)]
 
     average_ensemble = lambda e: np.median(e, axis=0)
+    percentiles = lambda ts: np.percentile(ts, [25, 75], 0)
 
+    ccfs = np.array([run['ccf'] for run in runs])
+    acfs_ou1 = np.array([run['acf_ou1'] for run in runs])
+    acfs_ou2 = np.array([run['acf_ou2'] for run in runs])
+    ou1s = np.array([run['ou1'] for run in runs])
+    ou2s = np.array([run['ou2'] for run in runs])
     return {
         'params': p,
         'noise1': np.array([run['noise1'] for run in runs]),
         'noise2': (np.array([run['noise2'] for run in runs])),
         'noise2_mean': average_ensemble(np.array([run['noise2_mean'] for run in runs])),
         'mixed_mean': average_ensemble(np.array([run['mixed_mean'] for run in runs])),
-        'ou1': np.array([run['ou1'] for run in runs]),
-        'ou2': np.array([run['ou2'] for run in runs]),
-        'acf_ou1': average_ensemble(np.array([run['acf_ou1'] for run in runs])),
-        'acf_ou2': average_ensemble(np.array([run['acf_ou2'] for run in runs])),
+        'ou1': ou1s,
+        'ou1_percentiles': percentiles(ou1s),
+        'ou2': ou2s,
+        'ou2_percentiles': percentiles(ou2s),
+        'acf_ou1': average_ensemble(acfs_ou1),
+        'acf_ou1_percentiles': percentiles(acfs_ou1),
+        'acf_ou2': average_ensemble(acfs_ou2),
+        'acf_ou2_percentiles': percentiles(acfs_ou2),
         'acf_lags': runs[0]['acf_lags'],
         'ccf_shifts': runs[0]['ccf_shifts'],
-        'ccf': average_ensemble(np.array([run['ccf'] for run in runs])),
+        'ccf': average_ensemble(ccfs),
+        'ccf_percentiles': percentiles(ccfs)
     }
