@@ -33,8 +33,8 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
     [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
 
     lags = 20
-    acf_ou1 = acf(ou1, nlags=lags)
-    acf_ou2 = acf(ou2, nlags=lags)
+    acf_ou1 = acf(ou1, nlags=lags, fft=False)
+    acf_ou2 = acf(ou2, nlags=lags, fft=False)
 
     w = 15
     ccf_shifts = np.arange(round(R / 2 - w), round(R / 2 + w), 1)
@@ -43,6 +43,8 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
     return {
         'noise1': noise1,
         'noise2': mixed_noise,
+        'noise2_mean': np.mean(noise2),
+        'mixed_mean': np.mean(mixed_noise),
         'ou1': ou1,
         'ou2': ou2,
         'acf_lags': lags,
@@ -61,6 +63,8 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, tau1, tau2, e, noise_type, ini
     return {
         'noise1': np.array([run['noise1'] for run in runs]),
         'noise2': (np.array([run['noise2'] for run in runs])),
+        'noise2_mean': average_ensemble(np.array([run['noise2_mean'] for run in runs])),
+        'mixed_mean': average_ensemble(np.array([run['mixed_mean'] for run in runs])),
         'ou1': np.array([run['ou1'] for run in runs]),
         'ou2': np.array([run['ou2'] for run in runs]),
         'acf_ou1': average_ensemble(np.array([run['acf_ou1'] for run in runs])),
