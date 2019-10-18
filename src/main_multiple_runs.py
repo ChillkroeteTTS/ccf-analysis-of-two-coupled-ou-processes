@@ -39,8 +39,7 @@ params = [
 
 
 def wrapped_delayed_processes(p):
-    return delayed_ou_processes_ensemble(R, T_cycles, t, p['tau1'], p['tau2'], p['e'], p['noiseType'],
-                                         initial_condition, ensemble_runs)
+    return delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_runs)
 def calculations():
     # parallelized simulation
     pool = mp.Pool(processes=8)
