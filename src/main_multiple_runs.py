@@ -17,7 +17,7 @@ tau1 = tau
 tau2 = tau
 e = 0.5
 initial_condition = 0
-ensemble_runs = 10
+ensemble_runs = 500
 
 params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE}},

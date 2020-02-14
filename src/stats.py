@@ -55,6 +55,21 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
     }
 
 
+# Returns the index of the value in the time series where the integral of the curve reaches 50%
+def i_50(ts):
+    total = np.sum(ts)
+
+    def reduce_to_iqr(agg, v):
+        [moving_sum, i_50] = agg
+        [i, y] = v
+
+        new_total = moving_sum + y
+        return [new_total, i if i_50 == 0 and new_total > (0.5 * total) else i_50]
+
+    [_, i] = functools.reduce(reduce_to_iqr, enumerate(ts), [0,0])
+    return i
+
+
 def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_count):
     tau1 = p['tau1']
     tau2 = p['tau2']
@@ -66,6 +81,7 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
     percentiles = lambda ts: np.percentile(ts, [25, 75], 0)
 
     ccfs = np.array([run['ccf'] for run in runs])
+    ccf_i_50s = [i_50(run['ccf']) for run in runs]
     acfs_ou1 = np.array([run['acf_ou1'] for run in runs])
     acfs_ou2 = np.array([run['acf_ou2'] for run in runs])
     ou1s = np.array([run['ou1'] for run in runs])
@@ -87,5 +103,7 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
         'acf_lags': runs[0]['acf_lags'],
         'ccf_shifts': runs[0]['ccf_shifts'],
         'ccf': average_ensemble(ccfs),
+        'ccf_i_50': average_ensemble(ccf_i_50s),
+        'ccf_i_50s_percentiles': percentiles(ccf_i_50s),
         'ccf_percentiles': percentiles(ccfs)
     }
