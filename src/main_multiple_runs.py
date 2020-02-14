@@ -9,7 +9,7 @@ from stats import delayed_ou_processes_ensemble
 import multiprocessing as mp
 
 T = 1  # delay
-R = 1000  # resolution
+R = 5000  # resolution
 T_cycles = 2
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 tau = 0.3

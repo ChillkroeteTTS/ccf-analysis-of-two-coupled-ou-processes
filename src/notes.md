@@ -10,7 +10,21 @@ Collection of ideas to mention in the report
 **What I saw in the measurements:**
 
 > With IC(initial condition) set to 0 (the mean of the process), the ACF of the OU process seems to be same as the one of the noise (should be checked in a graph),
-this is probably, because the "relaxation force" is too weak as long as the process is close to it's mean and the resolution is not fine enough.
+this is probably, because the "relaxation force" is too weak as long as the process is close to it's mean.
+>The resolution could also play a role, since the time window where relaxation is happening is very small/the relaxation is very fast.
+>So if the resolution is small, deviations of the process are immediatly compensated for.
+
+**Finer Resolution**
+> AS can be seen in the pictures acf_10000_ic0/15 (very high resolution), the resolution plays no role in the ACF of the ou.
+> With an ic different from 0, there is a clear autocorrelation which diminishes with increasing lag (see acf_5000_ic15.png).
+> Without, the AC reduces to zero when lag !== 0. This indicates, that the relaxing force is too strong to allow for a memory to build up.
+
+>> However! how does this explain, that the ccf is not 1 when e = 1 and  
+
+**Todos**
+
+- Plot the ACF of the OU and of the powering noise in one graph to see similarity
+- I
 
 ### Correlation between factor 'e' and max(ccf)
 **What I saw in the measurements** 
