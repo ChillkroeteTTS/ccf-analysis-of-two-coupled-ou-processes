@@ -32,7 +32,7 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
 
     [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
 
-    lags = 20
+    lags = 70
     # remove lag 0 (which is always 1) to display small values in the acf plot
     acf_ou1 = acf(ou1, nlags=lags, fft=False)
     acf_ou2 = acf(ou2, nlags=lags, fft=False)
