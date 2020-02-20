@@ -9,7 +9,7 @@ from stats import delayed_ou_processes_ensemble
 import multiprocessing as mp
 
 T = 1  # delay
-R = 500  # resolution
+R = 3000  # resolution
 T_cycles = 2
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 tau = 0.3
@@ -17,7 +17,7 @@ tau1 = tau
 tau2 = tau
 e = 0.5
 initial_condition = 0
-ensemble_runs = 100
+ensemble_runs = 200
 
 params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE}},
@@ -70,6 +70,21 @@ def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True):
                         percentiles_per_run=[[[r['acf_ou1_percentiles'][0][1:], r['acf_ou1_percentiles'][1][1:]],
                                               [r['acf_ou2_percentiles'][0][1:], r['acf_ou2_percentiles'][1][1:]]] for r in results],
                         labels=['ou1', 'mixed ou'], xlabel='lag', ylabel='ACF')
+        plt_time_series(params,
+                        [[acf_t[1:], acf_t[1:]] for r in results],
+                        [[r['acf_ou1'][1:], r['acf_noise1'][1:]] for r in results],
+                        '',
+                        percentiles_per_run=[[[r['acf_ou1_percentiles'][0][1:], r['acf_ou1_percentiles'][1][1:]],
+                                              [r['acf_noise1_percentiles'][0][1:], r['acf_noise1_percentiles'][1][1:]]] for r in results],
+                        labels=['ou1', 'noise1'], xlabel='lag', ylabel='ACF')
+
+        plt_time_series(params,
+                        [[acf_t[1:], acf_t[1:]] for r in results],
+                        [[r['acf_ou2'][1:], r['acf_noise1'][1:]] for r in results],
+                        '',
+                        percentiles_per_run=[[[r['acf_ou2_percentiles'][0][1:], r['acf_ou2_percentiles'][1][1:]],
+                                              [r['acf_mixed_noise_percentiles'][0][1:], r['acf_mixed_noise_percentiles'][1][1:]]] for r in results],
+                        labels=['mixed ou', 'mixed_noise'], xlabel='lag', ylabel='ACF')
 
     if show_ccf:
         plt_time_series(params,

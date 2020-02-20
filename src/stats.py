@@ -21,6 +21,7 @@ def normalized_correlation(ts1, ts2, shifts):
     # return [np.correlate(ts1, np.roll(ts2, int(shift)))
     #         for shift in shifts] * (1/np.sqrt(np.var(ts1)*np.var(ts2)))
 
+
 def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition):
     noise = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
 
@@ -33,8 +34,9 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
     [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
 
     lags = 70
-    # remove lag 0 (which is always 1) to display small values in the acf plot
     acf_ou1 = acf(ou1, nlags=lags, fft=False)
+    acf_noise1 = acf(noise1, nlags=lags, fft=False)
+    acf_mixed_noise = acf(mixed_noise, nlags=lags, fft=False)
     acf_ou2 = acf(ou2, nlags=lags, fft=False)
 
     w = 15
@@ -51,6 +53,8 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
         'acf_lags': lags,
         'acf_ou1': acf_ou1,
         'acf_ou2': acf_ou2,
+        'acf_noise1': acf_noise1,
+        'acf_mixed_noise': acf_mixed_noise,
         'ccf_shifts': ccf_shifts,
         'ccf': ccf,
     }
@@ -67,7 +71,7 @@ def i_50(ts):
         new_total = moving_sum + y
         return [new_total, i if i_50 == 0 and new_total > (0.5 * total) else i_50]
 
-    [_, i] = functools.reduce(reduce_to_iqr, enumerate(ts), [0,0])
+    [_, i] = functools.reduce(reduce_to_iqr, enumerate(ts), [0, 0])
     return i
 
 
@@ -76,7 +80,8 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
     tau2 = p['tau2']
     e = p['e']
     noise_type = p['noiseType']
-    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in range(0, ensemble_count)]
+    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in
+            range(0, ensemble_count)]
 
     average_ensemble = lambda e: np.median(e, axis=0)
     percentiles = lambda ts: np.percentile(ts, [25, 75], 0)
@@ -85,6 +90,8 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
     ccf_i_50s = [i_50(run['ccf']) for run in runs]
     acfs_ou1 = np.array([run['acf_ou1'] for run in runs])
     acfs_ou2 = np.array([run['acf_ou2'] for run in runs])
+    acfs_noise1 = np.array([run['acf_noise1'] for run in runs])
+    acfs_mixed_noise = np.array([run['acf_mixed_noise'] for run in runs])
     ou1s = np.array([run['ou1'] for run in runs])
     ou2s = np.array([run['ou2'] for run in runs])
     return {
@@ -99,6 +106,10 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
         'ou2_percentiles': percentiles(ou2s),
         'acf_ou1': average_ensemble(acfs_ou1),
         'acf_ou1_percentiles': percentiles(acfs_ou1),
+        'acf_noise1': average_ensemble(acfs_noise1),
+        'acf_mixed_noise': average_ensemble(acfs_mixed_noise),
+        'acf_noise1_percentiles': percentiles(acfs_noise1),
+        'acf_mixed_noise_percentiles': percentiles(acfs_mixed_noise),
         'acf_ou2': average_ensemble(acfs_ou2),
         'acf_ou2_percentiles': percentiles(acfs_ou2),
         'acf_lags': runs[0]['acf_lags'],
