@@ -32,7 +32,6 @@ this is probably, because the "relaxation force" is too weak as long as the proc
 >AS suggested by the correlation graph between e and max(ccf) and the ccf plots, the peak value of the ccf rises linear with e.
 This is intuitively explainable by 'e' controlling the mixin of the noises powering both ou processes where 1 means they are
 powered by the same noise. However, the ccf never reaches 1 (total identity), since both ou processes have different memories.
-s
 
 **Todos**
 

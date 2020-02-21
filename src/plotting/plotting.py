@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mlp
 
+from noise import NoiseType
+
 mlp.rcParams['figure.autolayout'] = False
 
 def plt_samples(t,t1, results):
@@ -87,7 +89,7 @@ def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel='', perc
                 axs[r][c].fill_between(t[j], curves[0], curves[1], alpha=0.4)
             axs[r][c].plot(t[j], y[j], label=label)
 
-        axs[r][c].title.set_text(f"e: {params[i]['e']}, tau: {params[i]['tau1']}")
+        axs[r][c].title.set_text(f"e: {params[i]['e']}, tau: {params[i]['tau1']}, gamma: {params[i].get('noiseType').get('gamma1')}")
 
         if showLabels:
             axs[r][c].legend(loc="upper right")
@@ -100,4 +102,40 @@ def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel='', perc
     plt.subplots_adjust(top=2)
     plt.tight_layout()
     plt.subplots_adjust(top=2)
+    plt.show()
+
+def plt_correlation(results):
+    def get_param_corr_pairs(param, fixedParam):
+        def isNoiseType(r, type):
+            return r['params']['noiseType']['type'] == type
+
+        def same_fixed_param_and_noise_type (r, noiseType):
+            red_noise_params = [r for r in results if isNoiseType(r, NoiseType.RED)]
+            gamma1 = r['params']['noiseType'].get('gamma1')
+            firstGamma = red_noise_params[0]['params']['noiseType'].get('gamma1')
+            firstFixedParam = results[0]['params'][fixedParam]
+            return r['params'][fixedParam] == firstFixedParam \
+                   and isNoiseType(r, noiseType) \
+                   and (gamma1 == None or gamma1 == firstGamma)
+
+        parameters_white = [r['params'][param] for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
+        parameters_red = [r['params'][param] for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+
+        max_ccf_values_white = [np.max(r['ccf']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
+        max_ccf_values_red = [np.max(r['ccf']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+
+        return [[parameters_white, max_ccf_values_white], [parameters_red, max_ccf_values_red]]
+
+    [[es_white, max_correlations_e_white], [es_red, max_correlations_e_red]] = get_param_corr_pairs('e', 'tau1')
+
+    fig, axs = plt.subplots(2,1)
+    axs[0].plot(es_white, max_correlations_e_white, 'x')
+    axs[0].plot(es_red, max_correlations_e_red, 'x', color='r')
+
+    axs[0].title.set_text(f"Correlation between max(ccf) and e")
+    axs[0].set_xlabel(f"e")
+    axs[0].set_ylabel(f"max(ccf)")
+    axs[0].legend([f"white noise", f"red noise"])
+
+    plt.tight_layout()
     plt.show()
