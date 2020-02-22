@@ -2,6 +2,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib as mlp
+from scipy.stats import norm
 
 from noise import NoiseType
 
@@ -105,37 +106,59 @@ def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel='', perc
     plt.show()
 
 def plt_correlation(results):
-    def get_param_corr_pairs(param, fixedParam):
+
+    def fit_norm(r):
+        mu, std = norm.fit(np.squeeze(r['ccf']))
+        # move fitted normal distribution from center
+        x_middle = r['ccf_shifts'][int(r['ccf_shifts'].size/2)]
+        mu = mu + x_middle
+        x = np.linspace(r['ccf_shifts'][0], r['ccf_shifts'][-1], 500)
+        p = norm.pdf(x, mu, std)
+        return [[x, p], [mu, std]]
+
+    def get_param_corr_pairs(getParam, getFixedParam1, getFixedParam2, yFn):
         def isNoiseType(r, type):
             return r['params']['noiseType']['type'] == type
 
         def same_fixed_param_and_noise_type (r, noiseType):
             red_noise_params = [r for r in results if isNoiseType(r, NoiseType.RED)]
-            gamma1 = r['params']['noiseType'].get('gamma1')
-            firstGamma = red_noise_params[0]['params']['noiseType'].get('gamma1')
-            firstFixedParam = results[0]['params'][fixedParam]
-            return r['params'][fixedParam] == firstFixedParam \
-                   and isNoiseType(r, noiseType) \
-                   and (gamma1 == None or gamma1 == firstGamma)
+            firstValueFixedParam1 = getFixedParam1(red_noise_params[0]['params'])
+            firstValueFixedParam2 = getFixedParam2(red_noise_params[0]['params'])
+            return isNoiseType(r, noiseType) \
+                   and (getFixedParam1(r['params']) == None or getFixedParam1(r['params']) == firstValueFixedParam1) \
+                   and (getFixedParam2(r['params']) == None or getFixedParam2(r['params']) == firstValueFixedParam2)
 
-        parameters_white = [r['params'][param] for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
-        parameters_red = [r['params'][param] for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
-
-        max_ccf_values_white = [np.max(r['ccf']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
-        max_ccf_values_red = [np.max(r['ccf']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+        parameters_white = [getParam(r['params']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
+        parameters_red = [getParam(r['params']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+        print(parameters_red)
+        max_ccf_values_white = [yFn(r) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
+        max_ccf_values_red = [yFn(r) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
 
         return [[parameters_white, max_ccf_values_white], [parameters_red, max_ccf_values_red]]
 
-    [[es_white, max_correlations_e_white], [es_red, max_correlations_e_red]] = get_param_corr_pairs('e', 'tau1')
+    getE = lambda params: params['e']
+    getTau1 = lambda params: params['tau1']
+    getGamma = lambda params: params['noiseType'].get('gamma1')
+
+    [[es_white, maxs_ccf_white], [es_red, maxs_ccf_red]] = get_param_corr_pairs(getE, getTau1, getGamma, lambda r: np.max(r['ccf']))
+    [[gammas_white, std_norm_white], [gammas_red, std_norm_red]] = get_param_corr_pairs(getGamma, getTau1, getE, lambda r: fit_norm(r)[1][1])
 
     fig, axs = plt.subplots(2,1)
-    axs[0].plot(es_white, max_correlations_e_white, 'x')
-    axs[0].plot(es_red, max_correlations_e_red, 'x', color='r')
+    axs[0].plot(es_white, maxs_ccf_white, 'x')
+    axs[0].plot(es_red, maxs_ccf_red, 'x', color='r')
 
     axs[0].title.set_text(f"Correlation between max(ccf) and e")
     axs[0].set_xlabel(f"e")
     axs[0].set_ylabel(f"max(ccf)")
     axs[0].legend([f"white noise", f"red noise"])
+
+    axs[1].plot(gammas_white, std_norm_white, 'x')
+    axs[1].plot(gammas_red, std_norm_red, 'x', color='r')
+
+    axs[1].title.set_text(f"Correlation between std of a fitted normal distribution and gamma")
+    axs[1].set_xlabel(f"gamma")
+    axs[1].set_ylabel(f"std(normfit(ccf))")
+    axs[1].legend([f"white noise driven", f"red noise driven"])
 
     plt.tight_layout()
     plt.show()
