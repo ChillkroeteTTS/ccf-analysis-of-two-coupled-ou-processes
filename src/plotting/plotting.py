@@ -69,28 +69,30 @@ def plt_acf(y1, y2):
     axs[1].legend(['ACF of ou2'])
     for ax in axs.flat:
         ax.axhline(0, linestyle='--', color='red')
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.show()
 
-def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel='', percentiles_per_run=[]):
-    cols = 3
-    rows = int(np.ceil(len(ts)/cols))
-    plt.subplots_adjust(top=2)
-    fig, axs = plt.subplots(rows, cols, sharey=True, figsize=[12, 12])
+def standart_title(params, i):
+    return f"e: {params[i]['e']}, tau: {params[i]['tau1']}, gamma: {params[i].get('noiseType').get('gamma1')}"
 
+def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[], xlabel='', ylabel='', percentiles_per_run=[]):
+    cols = min(len(ts), 3)
+    rows = int(np.ceil(len(ts)/cols))
+
+    fig, axs = plt.subplots(rows, cols, sharey=True, figsize=[4*cols, 4*rows], squeeze=False)
     for i, [t, y, percentiles] in enumerate(zip(ts, ys, [percentiles_per_run[i] if len(percentiles_per_run) > i else None for i, _ in enumerate(ts)])):
         r = int(np.floor(i / cols))
         c = int(i % cols)
 
-        showLabels = len(labels) > 0
         for j, _ in enumerate(t):
-            label = labels[j] if showLabels else ''
+            showLabels = (len(labels) > 0 and isinstance(labels[0], str)) or (len(labels) > i and len(labels[i]) > j)
+            label = labels[j] if showLabels and isinstance(labels[0], str) else (labels[i][j] if showLabels and isinstance(labels[0], list) else '')
             if percentiles is not None and len(percentiles) > j:
                 curves = np.squeeze(percentiles[j])
                 axs[r][c].fill_between(t[j], curves[0], curves[1], alpha=0.4)
             axs[r][c].plot(t[j], y[j], label=label)
 
-        axs[r][c].title.set_text(f"e: {params[i]['e']}, tau: {params[i]['tau1']}, gamma: {params[i].get('noiseType').get('gamma1')}")
+        axs[r][c].title.set_text(subTitleFn(params, i))
 
         if showLabels:
             axs[r][c].legend(loc="upper right")
@@ -98,12 +100,10 @@ def plt_time_series(params, ts, ys, title, labels=[], xlabel='', ylabel='', perc
         axs[r][c].set_xlabel(xlabel)
         axs[r][c].set_ylabel(ylabel)
 
-    plt.subplots_adjust(top=2)
-    st = fig.suptitle(title, size=16)
-    plt.subplots_adjust(top=2)
-    plt.tight_layout()
-    plt.subplots_adjust(top=2)
-    plt.show()
+        if i == (cols-1):
+            st = fig.suptitle(title, size=16)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    fig.show()
 
 def plt_correlation(results):
 
@@ -160,5 +160,5 @@ def plt_correlation(results):
     axs[1].set_ylabel(f"std(normfit(ccf))")
     axs[1].legend([f"white noise driven", f"red noise driven"])
 
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.show()

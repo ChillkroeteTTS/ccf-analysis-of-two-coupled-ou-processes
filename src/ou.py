@@ -14,7 +14,7 @@ def ou_step(init_cond, tau, history: List, n):
         prev_t = history[hits_size - 1][0]
         delta_n = (n - prev_n)
         delta_t = (t - prev_t)
-        x = prev_x + delta_t * (-prev_x / tau) + np.sqrt(2 / tau) * delta_n
+        x = prev_x + delta_t * (-prev_x / tau) + np.sqrt(2 / tau) * np.sqrt(delta_t) * n
     else:
         x = init_cond
     history.append([t, n,  x])
