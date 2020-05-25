@@ -73,7 +73,7 @@ def plot_with_percentiles(results: List[PercentileResult], ax, labels, xlabel=''
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     p = result['p']
-    ax.set_title(f"{p['noiseType']['type']}e={p['e']}, $\\tau_1$={p['tau1']}, $\\tau_2$={p['tau2']}")
+    ax.set_title(f"{p['noiseType']['type']}: e={p['e']}, $\\tau_1$={p['tau1']}, $\\tau_2$={p['tau2']}")
     ax.legend(loc="upper right")
 
 def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, ylabel, labels: List[str], title=''):
@@ -86,6 +86,8 @@ def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, yla
         plot_with_percentiles(res, axs[r][c], labels,  xlabel, ylabel)
 
     fig.suptitle(title)
+    # fig.subplots_adjust(left=0, right=1, bottom=0, top=0.95, wspace=0.01, hspace=0.01)
+    plt.subplots_adjust(hspace=1)
 
 # deprecated
 def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[], xlabel='', ylabel='', percentiles_per_run=[]):

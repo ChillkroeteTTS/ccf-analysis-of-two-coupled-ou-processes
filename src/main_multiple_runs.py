@@ -10,7 +10,7 @@ from noise import NoiseType
 from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble, \
     plot_multiple_percentiles
 from stats import delayed_ou_processes_ensemble, SimulationResults, to_json, from_json, ensemble_percentiles, \
-    PercentileResult, acf
+    PercentileResult, acf, ccf
 import multiprocessing as mp
 
 T = 1  # delay
@@ -111,21 +111,11 @@ def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_corr
         plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ou1', 'ou2'], title='Percentiles of Autocorrellation Functions')
 
     if show_ccf:
-        plt_time_series(get_white_noise(params),
-                        [[r['ccf_shifts']] for r in get_white_noise(results)],
-                        [[r['ccf']] for r in get_white_noise(results)],
-                        '',
-                        percentiles_per_run=[[r['ccf_percentiles']] for r in get_white_noise(results)],
-                        xlabel='lag',
-                        ylabel='CCF')
+        white_noise_res = [res for res in results if res['p']['noiseType']['type'] == NoiseType.RED]
+        percentile_of_results = [[ensemble_percentiles(res['ensemble'], lambda df: ccf(df, 'ou2', 'ou1', range(400, 600)), res['p'])]
+                                 for res in white_noise_res]
+        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ccf(ou1, ou2)'], title='Percentiles of Cross Correlation Functions')
 
-        plt_time_series(get_red_noise(params),
-                        [[r['ccf_shifts']] for r in get_red_noise(results)],
-                        [[r['ccf']] for r in get_red_noise(results)],
-                        '',
-                        percentiles_per_run=[[r['ccf_percentiles']] for r in get_red_noise(results)],
-                        xlabel='lag',
-                        ylabel='CCF')
     if show_correlation:
         plt_correlation(results)
     if show_different_taus:
@@ -185,5 +175,5 @@ def load_and_plot(base_path: Path, show_samples=True, show_acf=True, show_ccf=Tr
     return l
 
 if __name__ == '__main__':
-    load_and_plot(Path.cwd() / 'results' / '50_1000_0', True, False, False, False, False)
+    load_and_plot(Path.cwd() / 'results' / '50_1000_0', False, False, True, False, False)
     # calc_and_plot(True, False, False, False, False)
