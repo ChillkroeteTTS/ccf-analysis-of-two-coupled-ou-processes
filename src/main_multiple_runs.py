@@ -1,11 +1,15 @@
+import json
 import os
 import time
-import numpy as np
-from noise import NoiseType
-from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_samples, plt_correlation
-from stats import delayed_ou_processes_ensemble
-import multiprocessing as mp
+from pathlib import Path
+from typing import List, Dict
 
+import numpy as np
+import matplotlib.pyplot as plt
+from noise import NoiseType
+from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble
+from stats import delayed_ou_processes_ensemble, SimulationResults, to_json, from_json
+import multiprocessing as mp
 
 T = 1  # delay
 R = 1000  # resolution
@@ -89,22 +93,12 @@ def calculations():
     pool = mp.Pool(processes=8)
     return pool.map(wrapped_delayed_processes, simulate_on_params(params))
 
-
-def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlation=True, show_different_taus=True):
-    start_time = time.perf_counter()
-    results = calculations()
-
-    print('noise2 mean')
-    print(results[0]['noise2_mean'])
-    print('mixed mean')
-    print(results[0]['mixed_mean'])
-
+def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_correlation, show_different_taus, show_samples):
     if show_samples:
-        plt_samples(t, round(R / T_cycles), results)
-
-    acf_t = np.arange(0, results[0]['acf_lags'] + 1)
+        plt_sample_from_ensemble(t, round(R / T_cycles), results[0]['p'], results[0]['ensemble'])
 
     if show_acf:
+        acf_t = np.arange(0, results[0]['acf_lags'] + 1)
         results_without_asymm_params = np.concatenate((get_white_noise(results), get_red_noise(results), get_symm_increasing_gamma(results)))
         plt_time_series(params,
                         [[acf_t[1:], acf_t[1:]] for r in results_without_asymm_params],
@@ -129,9 +123,9 @@ def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlat
                         '',
                         percentiles_per_run=[[[r['acf_ou2_percentiles'][0][1:], r['acf_ou2_percentiles'][1][1:]],
                                               [r['acf_mixed_noise_percentiles'][0][1:],
-                                               r['acf_mixed_noise_percentiles'][1][1:]]] for r in results_without_asymm_params],
+                                               r['acf_mixed_noise_percentiles'][1][1:]]] for r in
+                                             results_without_asymm_params],
                         labels=['mixed ou', 'mixed_noise'], xlabel='lag', ylabel='ACF')
-
     if show_ccf:
         plt_time_series(get_white_noise(params),
                         [[r['ccf_shifts']] for r in get_white_noise(results)],
@@ -148,19 +142,19 @@ def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlat
                         percentiles_per_run=[[r['ccf_percentiles']] for r in get_red_noise(results)],
                         xlabel='lag',
                         ylabel='CCF')
-
     if show_correlation:
         plt_correlation(results)
-
     if show_different_taus:
-        partition = lambda a: [a[i*3:i*3 + 3] for i in [0,1]]
+        partition = lambda a: [a[i * 3:i * 3 + 3] for i in [0, 1]]
         plt_time_series(get_different_taus(params),
                         partition([r['ccf_shifts'] for r in get_different_taus(results)]),
                         partition([r['ccf'] for r in get_different_taus(results)]),
                         '',
                         percentiles_per_run=partition([r['ccf_percentiles'] for r in get_different_taus(results)]),
-                        labels=[[r'$\tau_2$ = 0.2', r'$\tau_2$ = 0.5', r'$\tau_2$ = 0.8'], [r'$\tau_1$ = 0.2', r'$\tau_1$ = 0.5', r'$\tau_1$ = 0.8']],
-                        subTitleFn=lambda params, i: f"fixed $\\tau_1$={params[i*3]['tau1']}" if i == 0 else f"fixed $\\tau_2$={params[i*3]['tau2']}",
+                        labels=[[r'$\tau_2$ = 0.2', r'$\tau_2$ = 0.5', r'$\tau_2$ = 0.8'],
+                                [r'$\tau_1$ = 0.2', r'$\tau_1$ = 0.5', r'$\tau_1$ = 0.8']],
+                        subTitleFn=lambda params,
+                                          i: f"fixed $\\tau_1$={params[i * 3]['tau1']}" if i == 0 else f"fixed $\\tau_2$={params[i * 3]['tau2']}",
                         xlabel='lag',
                         ylabel='CCF')
 
@@ -169,14 +163,41 @@ def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlat
                         partition([r['ccf'] for r in get_different_gammas(results)]),
                         '',
                         percentiles_per_run=partition([r['ccf_percentiles'] for r in get_different_gammas(results)]),
-                        labels=[[r'$\gamma_2$ = 0.2', r'$\gamma_2$ = 0.5', r'$\gamma_2$ = 0.8'], [r'$\gamma_1$ = 0.2', r'$\gamma_1$ = 0.5', r'$\gamma_1$ = 0.8']],
-                        subTitleFn=lambda params, i: f"fixed $\\gamma_1$={params[i*3]['noiseType']['gamma1']}" if i == 0 else f"fixed $\\gamma_2$={params[i*3]['noiseType']['gamma2']}",
+                        labels=[[r'$\gamma_2$ = 0.2', r'$\gamma_2$ = 0.5', r'$\gamma_2$ = 0.8'],
+                                [r'$\gamma_1$ = 0.2', r'$\gamma_1$ = 0.5', r'$\gamma_1$ = 0.8']],
+                        subTitleFn=lambda params,
+                                          i: f"fixed $\\gamma_1$={params[i * 3]['noiseType']['gamma1']}" if i == 0 else f"fixed $\\gamma_2$={params[i * 3]['noiseType']['gamma2']}",
                         xlabel='lag',
                         ylabel='CCF')
 
-    took = time.perf_counter() - start_time
-    print(f"It took {took}ms to finish calculations")
+    plt.show()
     return results
 
 
-calc_and_plot(True, True, True, True, True)
+def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlation=True, show_different_taus=True):
+    result_path = Path.cwd() / f"results/{ensemble_runs}_{R}_{initial_condition}"
+    start_time = time.perf_counter()
+    results: List[SimulationResults] = calculations()
+    print(f"It took {time.perf_counter() - start_time}ms to finish calculations")
+    print('simulations done, write to ' + str(result_path))
+
+    for i, res in enumerate(results):
+        full_result_path = result_path / f'{i}_{res["p"]["noiseType"]["type"]}_{res["p"]["e"]}_{res["p"]["tau1"]}_{res["p"]["tau2"]}.json'
+        with open(full_result_path, 'w+') as f:
+            jsonStr = to_json(res)
+            f.write(jsonStr)
+            f.close()
+    print(f"It took {time.perf_counter() - start_time}ms to write output data")
+
+    return plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+
+def load_and_plot(base_path: Path, show_samples=True, show_acf=True, show_ccf=True, show_correlation=True, show_different_taus=True):
+    start_time = time.perf_counter()
+    results: List[SimulationResults] = [from_json(open(base_path / path, 'r').read()) for path in os.listdir(base_path)]
+    print(f"It took {time.perf_counter() - start_time}ms to reload calculations")
+
+    return plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+
+if __name__ == '__main__':
+    load_and_plot(Path.cwd() / 'results' / '50_1000_0', True, False, False, False, False)
+    # calc_and_plot(True, False, False, False, False)

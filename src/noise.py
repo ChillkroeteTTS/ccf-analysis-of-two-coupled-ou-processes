@@ -1,11 +1,10 @@
 import functools
-from enum import Enum
 
 import numpy as np
 
-class NoiseType(Enum):
-    WHITE = 1
-    RED = 2
+class NoiseType:
+    WHITE = 'white noise'
+    RED = 'red noise'
 
 def white_noise(n):
     return np.random.normal(0, 1, n)

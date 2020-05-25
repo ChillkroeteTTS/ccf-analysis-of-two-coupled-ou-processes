@@ -2,34 +2,23 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib as mlp
+from pandas import DataFrame
 from scipy.stats import norm
+from typing import List
 
 from noise import NoiseType
 
 mlp.rcParams['figure.autolayout'] = False
 
-def plt_samples(t,t1, results):
-    res_zero = results[0]
-    default_noise_intensity = np.median([np.var(n[t1:]) for n in res_zero['noise1']])
-    mixed_noise_intensity = np.median([np.var(n[t1:]) for n in res_zero['noise2']])
-
-    plt_2_graphs_with_same_axis(t, [res_zero['ou1'][0], res_zero['noise1'][0]],
-                                [res_zero['ou2'][0], res_zero['noise2'][0]],
-                                title1='OU Sample (Default)',
-                                title2='OU Sample (Delayed)',
-                                xlabel='t',
-                                legends=[['ou', f'white noise (intensity: {default_noise_intensity:.2f})'],
-                                         ['ou', f'white noise (intensity: {mixed_noise_intensity:.2f})']],
-                                )
-    res_zero = results[6]
-    plt_2_graphs_with_same_axis(t,
-                                [res_zero['ou1'][0], res_zero['noise1'][0]],
-                                [res_zero['ou2'][0], res_zero['noise2'][0]],
-                                title1='OU Sample (Default)',
-                                title2='OU Sample (Delayed)',
-                                xlabel='t',
-                                legends=[['ou', f'red noise (intensity: {default_noise_intensity:.2f})'],
-                                         ['ou', f'red noise (intensity: {mixed_noise_intensity:.2f})']])
+def plt_sample_from_ensemble(t,t1, p, ensemble: List[DataFrame]):
+    default_noise_intensity = np.median([df['noise1'].var() for df in ensemble])
+    mixed_noise_intensity = np.median([df['mixed_noise'].var() for df in ensemble])
+    noise_type = p['noiseType']['type']
+    ensemble[0][['ou1', 'ou2']]\
+        .rename({'ou1': f'OU1: {noise_type} (var: {default_noise_intensity:.2f})',
+                 'ou2': f'OU2: {noise_type} (var: {mixed_noise_intensity:.2f})'}, axis='columns')\
+        .plot(title=f"Sample from ensemble run with e={p['e']}, $\\tau_1$={p['tau1']}, $\\tau_2$={p['tau2']}")\
+    .set_xlabel('t')
 
 
 def plt_2_graphs_with_same_axis(t, y1s, y2s, xlabel='', ylabel='', legends=[[], []], title1='', title2='', percentiles1=None, percentiles2=None):

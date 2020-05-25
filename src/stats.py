@@ -1,22 +1,39 @@
 import functools
 
+import json
+from io import StringIO
+
 import numpy as np
+from numbers import Number
 
-from statsmodels.tsa.stattools import acf
+import pandas as pd
+from pandas import DataFrame, Series
 
+from typing import TypedDict, Any, List, Dict
 from noise import white_noise, NoiseType, red_noise
 from ou import ou, mixed_noise_ou
 
+class SimulationResults(TypedDict):
+    p: Dict
+    median: DataFrame
+    ensemble: List[DataFrame]
 
 def normalize(ts):
     return (ts - np.mean(ts)) / np.std(ts)
 
 
-def normalized_correlation(ts1, ts2, shifts):
-    # normalization according to https://stackoverflow.com/questions/5639280/why-numpy-correlate-and-corrcoef-return-different-values-and-how-to-normalize/5639626#5639626
-    normalized_ts1 = normalize(ts1) / len(ts1)
-    normalized_ts2 = normalize(ts2)
-    return [np.correlate(normalized_ts1, np.roll(normalized_ts2, int(shift))) for shift in shifts]
+def acf(ser: Series, lags: Number):
+    return Series([ser.autocorr(lag) for lag in range(0, lags)])
+
+
+def ccf(df: DataFrame, column1: str, column2: str, range: List[Number]):
+    return Series([df[column1].corr(df[column2].shift(lag)) for lag in range], index=range)
+
+
+def group_by_index(dfs: List[DataFrame]):
+    concatted: DataFrame = functools.reduce(lambda agg, df: pd.concat((agg, df)), dfs)
+    return concatted.groupby(concatted.index)
+
 
 def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition):
     noise = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
@@ -29,31 +46,8 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
 
     [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
 
-    lags = 90
-    acf_ou1 = acf(ou1, nlags=lags, fft=False)
-    acf_noise1 = acf(noise1, nlags=lags, fft=False)
-    acf_mixed_noise = acf(mixed_noise, nlags=lags, fft=False)
-    acf_ou2 = acf(ou2, nlags=lags, fft=False)
-
-    w = 100
-    ccf_shifts = np.arange(round(R / 2 - w), round(R / 2 + w), 1)
-    ccf = normalized_correlation(ou1, ou2, ccf_shifts)
-
-    return {
-        'noise1': noise1,
-        'noise2': mixed_noise,
-        'noise2_mean': np.mean(noise2),
-        'mixed_mean': np.mean(mixed_noise),
-        'ou1': ou1,
-        'ou2': ou2,
-        'acf_lags': lags,
-        'acf_ou1': acf_ou1,
-        'acf_ou2': acf_ou2,
-        'acf_noise1': acf_noise1,
-        'acf_mixed_noise': acf_mixed_noise,
-        'ccf_shifts': ccf_shifts,
-        'ccf': ccf,
-    }
+    df_base_data = DataFrame({'noise1': noise1, 'noise2': noise2, 'mixed_noise': mixed_noise, 'ou1': ou1, 'ou2': ou2})
+    return df_base_data
 
 
 # Returns the index of the value in the time series where the integral of the curve reaches 50%
@@ -76,42 +70,26 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
     tau2 = p['tau2']
     e = p['e']
     noise_type = p['noiseType']
-    runs = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) for _ in
-            range(0, ensemble_count)]
+    ensemble_runs: List[DataFrame] = [delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition)
+                                      for _ in
+                                      range(0, ensemble_count)]
 
-    average_ensemble = lambda e: np.median(e, axis=0)
-    percentiles = lambda ts: np.percentile(ts, [25, 75], 0)
+    return {'p': p,
+            'median': group_by_index(ensemble_runs).median(),
+            'ensemble': ensemble_runs}
 
-    ccfs = np.array([run['ccf'] for run in runs])
-    ccf_i_50s = [i_50(run['ccf']) for run in runs]
-    acfs_ou1 = np.array([run['acf_ou1'] for run in runs])
-    acfs_ou2 = np.array([run['acf_ou2'] for run in runs])
-    acfs_noise1 = np.array([run['acf_noise1'] for run in runs])
-    acfs_mixed_noise = np.array([run['acf_mixed_noise'] for run in runs])
-    ou1s = np.array([run['ou1'] for run in runs])
-    ou2s = np.array([run['ou2'] for run in runs])
+
+def to_json(res: SimulationResults):
+    return json.dumps({
+        'p': res['p'],
+        'median': res['median'].to_csv(),
+        'ensemble': [e.to_csv() for e in res['ensemble']]}
+    )
+
+def from_json(str: str):
+    nested = json.loads(str)
     return {
-        'params': p,
-        'noise1': np.array([run['noise1'] for run in runs]),
-        'noise2': (np.array([run['noise2'] for run in runs])),
-        'noise2_mean': average_ensemble(np.array([run['noise2_mean'] for run in runs])),
-        'mixed_mean': average_ensemble(np.array([run['mixed_mean'] for run in runs])),
-        'ou1': ou1s,
-        'ou1_percentiles': percentiles(ou1s),
-        'ou2': ou2s,
-        'ou2_percentiles': percentiles(ou2s),
-        'acf_ou1': average_ensemble(acfs_ou1),
-        'acf_ou1_percentiles': percentiles(acfs_ou1),
-        'acf_noise1': average_ensemble(acfs_noise1),
-        'acf_mixed_noise': average_ensemble(acfs_mixed_noise),
-        'acf_noise1_percentiles': percentiles(acfs_noise1),
-        'acf_mixed_noise_percentiles': percentiles(acfs_mixed_noise),
-        'acf_ou2': average_ensemble(acfs_ou2),
-        'acf_ou2_percentiles': percentiles(acfs_ou2),
-        'acf_lags': runs[0]['acf_lags'],
-        'ccf_shifts': runs[0]['ccf_shifts'],
-        'ccf': average_ensemble(ccfs),
-        'ccf_i_50': average_ensemble(ccf_i_50s),
-        'ccf_i_50s_percentiles': percentiles(ccf_i_50s),
-        'ccf_percentiles': percentiles(ccfs)
+        'p': nested['p'],
+        'median': pd.read_csv(StringIO(nested['median'])),
+        'ensemble': [pd.read_csv(StringIO(e)) for e in nested['ensemble']]
     }
