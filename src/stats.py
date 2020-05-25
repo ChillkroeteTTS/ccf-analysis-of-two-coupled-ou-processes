@@ -16,7 +16,15 @@ from ou import ou, mixed_noise_ou
 class SimulationResults(TypedDict):
     p: Dict
     median: DataFrame
+    lower_percentile: DataFrame
+    upper_percentile: DataFrame
     ensemble: List[DataFrame]
+
+class PercentileResult(TypedDict):
+    p: Dict
+    median: DataFrame
+    lower_percentile: DataFrame
+    upper_percentile: DataFrame
 
 def normalize(ts):
     return (ts - np.mean(ts)) / np.std(ts)
@@ -64,6 +72,15 @@ def i_50(ts):
     [_, i] = functools.reduce(reduce_to_iqr, enumerate(ts), [0, 0])
     return i
 
+def ensemble_percentiles(ensemble: List[DataFrame], fn, p) -> PercentileResult:
+    results = [fn(realization) for realization in ensemble]
+    grouped = group_by_index(results)
+    return {
+        'median': grouped.median(),
+        'p': p,
+        'lower_percentile': grouped.quantile(.25),
+        'upper_percentile': grouped.quantile(.75),
+    }
 
 def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_count):
     tau1 = p['tau1']
@@ -76,6 +93,8 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
 
     return {'p': p,
             'median': group_by_index(ensemble_runs).median(),
+            'lower_percentile': group_by_index(ensemble_runs).quantile(.25),
+            'upper_percentile': group_by_index(ensemble_runs).quantile(.75),
             'ensemble': ensemble_runs}
 
 
@@ -83,6 +102,8 @@ def to_json(res: SimulationResults):
     return json.dumps({
         'p': res['p'],
         'median': res['median'].to_csv(),
+        'lower_percentile': res['lower_percentile'].to_csv(),
+        'upper_percentile': res['upper_percentile'].to_csv(),
         'ensemble': [e.to_csv() for e in res['ensemble']]}
     )
 
@@ -91,5 +112,7 @@ def from_json(str: str):
     return {
         'p': nested['p'],
         'median': pd.read_csv(StringIO(nested['median'])),
+        'lower_percentile': pd.read_csv(StringIO(nested['lower_percentile'])),
+        'upper_percentile': pd.read_csv(StringIO(nested['upper_percentile'])),
         'ensemble': [pd.read_csv(StringIO(e)) for e in nested['ensemble']]
     }

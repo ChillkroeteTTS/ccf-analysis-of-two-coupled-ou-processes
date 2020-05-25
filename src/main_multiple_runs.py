@@ -7,8 +7,10 @@ from typing import List, Dict
 import numpy as np
 import matplotlib.pyplot as plt
 from noise import NoiseType
-from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble
-from stats import delayed_ou_processes_ensemble, SimulationResults, to_json, from_json
+from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble, \
+    plot_multiple_percentiles
+from stats import delayed_ou_processes_ensemble, SimulationResults, to_json, from_json, ensemble_percentiles, \
+    PercentileResult, acf
 import multiprocessing as mp
 
 T = 1  # delay
@@ -93,39 +95,21 @@ def calculations():
     pool = mp.Pool(processes=8)
     return pool.map(wrapped_delayed_processes, simulate_on_params(params))
 
+
 def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_correlation, show_different_taus, show_samples):
     if show_samples:
         plt_sample_from_ensemble(t, round(R / T_cycles), results[0]['p'], results[0]['ensemble'])
 
     if show_acf:
-        acf_t = np.arange(0, results[0]['acf_lags'] + 1)
-        results_without_asymm_params = np.concatenate((get_white_noise(results), get_red_noise(results), get_symm_increasing_gamma(results)))
-        plt_time_series(params,
-                        [[acf_t[1:], acf_t[1:]] for r in results_without_asymm_params],
-                        [[r['acf_ou1'][1:], r['acf_ou2'][1:]] for r in results_without_asymm_params],
-                        '',
-                        percentiles_per_run=[[[r['acf_ou1_percentiles'][0][1:], r['acf_ou1_percentiles'][1][1:]],
-                                              [r['acf_ou2_percentiles'][0][1:], r['acf_ou2_percentiles'][1][1:]]] for r
-                                             in results_without_asymm_params],
-                        labels=['ou1', 'mixed ou'], xlabel='lag', ylabel='ACF')
-        plt_time_series(params,
-                        [[acf_t[1:], acf_t[1:]] for r in results_without_asymm_params],
-                        [[r['acf_ou1'][1:], r['acf_noise1'][1:]] for r in results_without_asymm_params],
-                        '',
-                        percentiles_per_run=[[[r['acf_ou1_percentiles'][0][1:], r['acf_ou1_percentiles'][1][1:]],
-                                              [r['acf_noise1_percentiles'][0][1:], r['acf_noise1_percentiles'][1][1:]]]
-                                             for r in results_without_asymm_params],
-                        labels=['ou1', 'noise1'], xlabel='lag', ylabel='ACF')
+        # acf_t = np.arange(0, results[0]['acf_lags'] + 1)
+        results_without_asymm_params = [res for res in results if res['p']['tau1'] == res['p']['tau2']]
+        lag = 100
+        percentile_of_results = [[ensemble_percentiles(res['ensemble'], lambda df: acf(df['ou1'], lag), res['p']),
+                                  ensemble_percentiles(res['ensemble'], lambda df: acf(df['ou2'], lag), res['p'])
+                                  ]
+                                 for res in results_without_asymm_params]
+        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ou1', 'ou2'], title='Percentiles of Autocorrellation Functions')
 
-        plt_time_series(params,
-                        [[acf_t[1:], acf_t[1:]] for r in results_without_asymm_params],
-                        [[r['acf_ou2'][1:], r['acf_noise1'][1:]] for r in results_without_asymm_params],
-                        '',
-                        percentiles_per_run=[[[r['acf_ou2_percentiles'][0][1:], r['acf_ou2_percentiles'][1][1:]],
-                                              [r['acf_mixed_noise_percentiles'][0][1:],
-                                               r['acf_mixed_noise_percentiles'][1][1:]]] for r in
-                                             results_without_asymm_params],
-                        labels=['mixed ou', 'mixed_noise'], xlabel='lag', ylabel='ACF')
     if show_ccf:
         plt_time_series(get_white_noise(params),
                         [[r['ccf_shifts']] for r in get_white_noise(results)],
@@ -196,7 +180,9 @@ def load_and_plot(base_path: Path, show_samples=True, show_acf=True, show_ccf=Tr
     results: List[SimulationResults] = [from_json(open(base_path / path, 'r').read()) for path in os.listdir(base_path)]
     print(f"It took {time.perf_counter() - start_time}ms to reload calculations")
 
-    return plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+    l = plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+    print(f"It took {time.perf_counter() - start_time}ms to plot everything")
+    return l
 
 if __name__ == '__main__':
     load_and_plot(Path.cwd() / 'results' / '50_1000_0', True, False, False, False, False)

@@ -7,6 +7,7 @@ from scipy.stats import norm
 from typing import List
 
 from noise import NoiseType
+from stats import PercentileResult
 
 mlp.rcParams['figure.autolayout'] = False
 
@@ -64,6 +65,29 @@ def plt_acf(y1, y2):
 def standart_title(params, i):
     return f"e: {params[i]['e']}, tau: {params[i]['tau1']}, gamma: {params[i].get('noiseType').get('gamma1')}"
 
+def plot_with_percentiles(results: List[PercentileResult], ax, labels, xlabel='', ylabel=''):
+    for i, result in enumerate(results):
+        median = result['median']
+        ax.fill_between(median.index, result['lower_percentile'], result['upper_percentile'], alpha=0.4)
+        ax.plot(median.index, median, label=labels[i])
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    p = result['p']
+    ax.set_title(f"{p['noiseType']['type']}e={p['e']}, $\\tau_1$={p['tau1']}, $\\tau_2$={p['tau2']}")
+    ax.legend(loc="upper right")
+
+def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, ylabel, labels: List[str], title=''):
+    cols = min(len(results), 3)
+    rows = int(np.ceil(len(results)/cols))
+    fig, axs = plt.subplots(rows, cols, sharey=True, squeeze=False)
+    for i, res in enumerate(results):
+        r = int(np.floor(i / cols))
+        c = int(i % cols)
+        plot_with_percentiles(res, axs[r][c], labels,  xlabel, ylabel)
+
+    fig.suptitle(title)
+
+# deprecated
 def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[], xlabel='', ylabel='', percentiles_per_run=[]):
     cols = min(len(ts), 3)
     rows = int(np.ceil(len(ts)/cols))
