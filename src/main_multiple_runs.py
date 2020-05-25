@@ -6,10 +6,9 @@ from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_
 from stats import delayed_ou_processes_ensemble
 import multiprocessing as mp
 
-# TODO: Fix acf, much higher lags, 
 
 T = 1  # delay
-R = 100  # resolution
+R = 1000  # resolution
 T_cycles = 2
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 initial_condition = 0

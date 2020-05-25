@@ -1,5 +1,5 @@
 ## Good parameter configurations
-ensemble = 500 rtakes about 30s but results in very smooth curves.
+Ensemble = 500 rtakes about 30s but results in very smooth curves.
 Correlation plot of e with max(ccf) suggests a linear correlation
 
 ## Ideas for analysis

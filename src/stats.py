@@ -16,11 +16,7 @@ def normalized_correlation(ts1, ts2, shifts):
     # normalization according to https://stackoverflow.com/questions/5639280/why-numpy-correlate-and-corrcoef-return-different-values-and-how-to-normalize/5639626#5639626
     normalized_ts1 = normalize(ts1) / len(ts1)
     normalized_ts2 = normalize(ts2)
-    return [np.correlate(normalized_ts1, np.roll(normalized_ts2, int(shift)))
-            for shift in shifts]
-    # return [np.correlate(ts1, np.roll(ts2, int(shift)))
-    #         for shift in shifts] * (1/np.sqrt(np.var(ts1)*np.var(ts2)))
-
+    return [np.correlate(normalized_ts1, np.roll(normalized_ts2, int(shift))) for shift in shifts]
 
 def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition):
     noise = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
@@ -33,13 +29,13 @@ def delayed_ou_processes(R, T_cycles, t, tau1, tau2, e, noise_type, initial_cond
 
     [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
 
-    lags = 70
+    lags = 90
     acf_ou1 = acf(ou1, nlags=lags, fft=False)
     acf_noise1 = acf(noise1, nlags=lags, fft=False)
     acf_mixed_noise = acf(mixed_noise, nlags=lags, fft=False)
     acf_ou2 = acf(ou2, nlags=lags, fft=False)
 
-    w = 15
+    w = 100
     ccf_shifts = np.arange(round(R / 2 - w), round(R / 2 + w), 1)
     ccf = normalized_correlation(ou1, ou2, ccf_shifts)
 
