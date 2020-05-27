@@ -18,7 +18,7 @@ R = 1000  # resolution
 T_cycles = 2
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 initial_condition = 0
-ensemble_runs = 50
+ensemble_runs = 200
 
 params = [
     # WHITE, increasing e
@@ -112,7 +112,7 @@ def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_corr
 
     if show_ccf:
         white_noise_res = [res for res in results if res['p']['noiseType']['type'] == NoiseType.RED]
-        percentile_of_results = [[ensemble_percentiles(res['ensemble'], lambda df: ccf(df, 'ou2', 'ou1', range(400, 600)), res['p'])]
+        percentile_of_results = [[{'median': res['ccf_median'], 'lower_percentile': res['ccf_lower_percentile'], 'upper_percentile': res['ccf_upper_percentile'], 'p': res['p']}]
                                  for res in white_noise_res]
         plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ccf(ou1, ou2)'], title='Percentiles of Cross Correlation Functions')
 
@@ -144,7 +144,6 @@ def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_corr
                         xlabel='lag',
                         ylabel='CCF')
 
-    plt.show()
     return results
 
 
@@ -162,8 +161,13 @@ def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlat
             f.write(jsonStr)
             f.close()
     print(f"It took {time.perf_counter() - start_time}ms to write output data")
+    write_done = time.perf_counter()
 
-    return plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+    res = plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+    print(f"It took {time.perf_counter() - write_done}ms to prepare plots")
+
+    plt.show()
+    return res
 
 def load_and_plot(base_path: Path, show_samples=True, show_acf=True, show_ccf=True, show_correlation=True, show_different_taus=True):
     start_time = time.perf_counter()
@@ -172,8 +176,9 @@ def load_and_plot(base_path: Path, show_samples=True, show_acf=True, show_ccf=Tr
 
     l = plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
     print(f"It took {time.perf_counter() - start_time}ms to plot everything")
+    plt.show()
     return l
 
 if __name__ == '__main__':
-    load_and_plot(Path.cwd() / 'results' / '50_1000_0', False, False, True, False, False)
-    # calc_and_plot(True, False, False, False, False)
+    load_and_plot(Path.cwd() / 'results' / '200_1000_0', False, False, True, False, False)
+    # calc_and_plot(True, False, True, False, False)
