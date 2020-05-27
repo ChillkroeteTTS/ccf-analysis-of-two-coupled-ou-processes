@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from noise import NoiseType
 from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble, \
-    plot_multiple_percentiles
+    plot_multiple_percentiles, plot_heatmap
 from stats import delayed_ou_processes_ensemble, SimulationResults, to_json, from_json, ensemble_percentiles, \
     PercentileResult, acf, ccf
 import multiprocessing as mp
@@ -67,11 +67,23 @@ params = [
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.8, 'gamma2': 0.5}},
 ]
 
+paramsTauVsE =  \
+    [{'e': i, 'tau1': 0.1, 'tau2': 0.1, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 1, 'tau2': 1, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.1, 'tau2': 0.1, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 1, 'tau2': 1, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)]
+
 def simulate_on_params(ps):
     return ps
 
 def get_white_noise(a):
-    return a[:6]
+    return a[:7]
 
 def get_red_noise(a):
     return a[6:12]
@@ -93,7 +105,7 @@ def wrapped_delayed_processes(p):
 def calculations():
     # parallelized simulation
     pool = mp.Pool(processes=8)
-    return pool.map(wrapped_delayed_processes, simulate_on_params(params))
+    return pool.map(wrapped_delayed_processes, simulate_on_params(paramsTauVsE))
 
 
 def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_correlation, show_different_taus, show_samples):
@@ -147,13 +159,14 @@ def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_corr
     return results
 
 
-def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlation=True, show_different_taus=True):
+def calc_and_save():
     result_path = Path.cwd() / f"results/{ensemble_runs}_{R}_{initial_condition}"
     start_time = time.perf_counter()
     results: List[SimulationResults] = calculations()
     print(f"It took {time.perf_counter() - start_time}ms to finish calculations")
     print('simulations done, write to ' + str(result_path))
 
+    os.makedirs(str(result_path), exist_ok=True)
     for i, res in enumerate(results):
         full_result_path = result_path / f'{i}_{res["p"]["noiseType"]["type"]}_{res["p"]["e"]}_{res["p"]["tau1"]}_{res["p"]["tau2"]}.json'
         with open(full_result_path, 'w+') as f:
@@ -163,22 +176,16 @@ def calc_and_plot(show_samples=True, show_acf=True, show_ccf=True, show_correlat
     print(f"It took {time.perf_counter() - start_time}ms to write output data")
     write_done = time.perf_counter()
 
-    res = plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
+    # res = plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
     print(f"It took {time.perf_counter() - write_done}ms to prepare plots")
 
-    plt.show()
+    # plt.show()
     return res
 
-def load_and_plot(base_path: Path, show_samples=True, show_acf=True, show_ccf=True, show_correlation=True, show_different_taus=True):
-    start_time = time.perf_counter()
+def load_results(base_path: Path):
     results: List[SimulationResults] = [from_json(open(base_path / path, 'r').read()) for path in os.listdir(base_path)]
-    print(f"It took {time.perf_counter() - start_time}ms to reload calculations")
 
-    l = plot_results(results, show_acf, show_ccf, show_correlation, show_different_taus, show_samples)
-    print(f"It took {time.perf_counter() - start_time}ms to plot everything")
-    plt.show()
-    return l
+    return results
 
 if __name__ == '__main__':
-    load_and_plot(Path.cwd() / 'results' / '200_1000_0', False, False, True, False, False)
-    # calc_and_plot(True, False, True, False, False)
+    calc_and_save()

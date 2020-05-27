@@ -2,12 +2,12 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib as mlp
+import pandas as pd
 from pandas import DataFrame
 from scipy.stats import norm
 from typing import List
-
 from noise import NoiseType
-from stats import PercentileResult
+from stats import PercentileResult, SimulationResults
 
 mlp.rcParams['figure.autolayout'] = False
 
@@ -64,6 +64,34 @@ def plt_acf(y1, y2):
 
 def standart_title(params, i):
     return f"e: {params[i]['e']}, tau: {params[i]['tau1']}, gamma: {params[i].get('noiseType').get('gamma1')}"
+
+
+def plot_heatmap(results: List[SimulationResults], xkey, ykey, title):
+    z = gen_3d_data(results, xkey, ykey)
+
+    fig, ax = plt.subplots(1)
+    plt.pcolormesh(np.arange(0, 1.2, 0.1), np.arange(0, 1.2, 0.1), z, vmin=0, vmax=1, cmap='OrRd')
+    plt.colorbar()
+    fig.suptitle(title)
+    ax.set_xlabel(xkey)
+    ax.set_ylabel(ykey)
+    return z
+
+
+def gen_3d_data(results, xkey, ykey):
+    z = np.zeros([11, 11]) # 0, 0.1, ..., 1 (inclusive)
+    for res in results:
+        ix = int(res['p'][xkey] * 10)
+        iy = int(res['p'][ykey] * 10)
+        z[iy][ix] = res['ccf_median'].max()
+    return z
+
+def gen_2d_data(results, xkey):
+    z = np.zeros(11) # 0, 0.1, ..., 1 (inclusive)
+    for res in results:
+        ix = int(res['p'][xkey] * 10)
+        z[ix] = res['ccf_median'].max()
+    return z
 
 def plot_with_percentiles(results: List[PercentileResult], ax, labels, xlabel='', ylabel=''):
     for i, result in enumerate(results):
