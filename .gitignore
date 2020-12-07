@@ -2,4 +2,5 @@ venv
 python
 .idea
 results
+.ipynb_checkpoints
 

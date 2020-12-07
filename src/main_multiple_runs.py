@@ -1,22 +1,23 @@
+import json
+import multiprocessing as mp
 import os
 import time
 from pathlib import Path
-from typing import List, Dict
+from typing import List
 
 import numpy as np
+import shutil
+
+from file_handling import write_simulations_to_disk
 from noise import NoiseType
-from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble, \
-    plot_multiple_percentiles, plot_heatmap
-from stats import delayed_ou_processes_ensemble, SimulationResults, to_json, from_json, ensemble_percentiles, \
-    PercentileResult, acf, ccf
-import multiprocessing as mp
+from stats import delayed_ou_processes_ensemble, SimulationResults, from_json
 
 T = 1  # delay
-R = 1000  # resolution
+R = 100  # resolution
 T_cycles = 2
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 initial_condition = 0
-ensemble_runs = 100
+ensemble_runs = 30
 
 params = [
     # WHITE, increasing e
@@ -107,69 +108,14 @@ def get_different_gammas(a):
     return a[21:27]
 
 
-def wrapped_delayed_processes(p):
+def wrapped_delayed_processes(p) -> SimulationResults:
     return delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_runs)
 
 
-def calculations():
+def calculations() -> List[SimulationResults]:
     # parallelized simulation
-    pool = mp.Pool(processes=8)
+    pool = mp.Pool(processes=12)
     return pool.map(wrapped_delayed_processes, simulate_on_params(paramsTauVsE))
-
-
-def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_correlation, show_different_taus,
-                 show_samples):
-    if show_samples:
-        plt_sample_from_ensemble(t, round(R / T_cycles), results[0]['p'], results[0]['ensemble'])
-
-    if show_acf:
-        # acf_t = np.arange(0, results[0]['acf_lags'] + 1)
-        results_without_asymm_params = [res for res in results if res['p']['tau1'] == res['p']['tau2']]
-        lag = 100
-        percentile_of_results = [[ensemble_percentiles(res['ensemble'], lambda df: acf(df['ou1'], lag), res['p']),
-                                  ensemble_percentiles(res['ensemble'], lambda df: acf(df['ou2'], lag), res['p'])
-                                  ]
-                                 for res in results_without_asymm_params]
-        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ou1', 'ou2'],
-                                  title='Percentiles of autocorrelation Functions')
-
-    if show_ccf:
-        white_noise_res = [res for res in results if res['p']['noiseType']['type'] == NoiseType.RED]
-        percentile_of_results = [[{'median': res['ccf_median'], 'lower_percentile': res['ccf_lower_percentile'],
-                                   'upper_percentile': res['ccf_upper_percentile'], 'p': res['p']}]
-                                 for res in white_noise_res]
-        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ccf(ou1, ou2)'],
-                                  title='Percentiles of Cross Correlation Functions')
-
-    if show_correlation:
-        plt_correlation(results)
-    if show_different_taus:
-        partition = lambda a: [a[i * 3:i * 3 + 3] for i in [0, 1]]
-        plt_time_series(get_different_taus(params),
-                        partition([r['ccf_shifts'] for r in get_different_taus(results)]),
-                        partition([r['ccf'] for r in get_different_taus(results)]),
-                        '',
-                        percentiles_per_run=partition([r['ccf_percentiles'] for r in get_different_taus(results)]),
-                        labels=[[r'$\tau_2$ = 0.2', r'$\tau_2$ = 0.5', r'$\tau_2$ = 0.8'],
-                                [r'$\tau_1$ = 0.2', r'$\tau_1$ = 0.5', r'$\tau_1$ = 0.8']],
-                        subTitleFn=lambda params,
-                                          i: f"fixed $\\tau_1$={params[i * 3]['tau1']}" if i == 0 else f"fixed $\\tau_2$={params[i * 3]['tau2']}",
-                        xlabel='lag',
-                        ylabel='CCF')
-
-        plt_time_series(get_different_gammas(params),
-                        partition([r['ccf_shifts'] for r in get_different_gammas(results)]),
-                        partition([r['ccf'] for r in get_different_gammas(results)]),
-                        '',
-                        percentiles_per_run=partition([r['ccf_percentiles'] for r in get_different_gammas(results)]),
-                        labels=[[r'$\gamma_2$ = 0.2', r'$\gamma_2$ = 0.5', r'$\gamma_2$ = 0.8'],
-                                [r'$\gamma_1$ = 0.2', r'$\gamma_1$ = 0.5', r'$\gamma_1$ = 0.8']],
-                        subTitleFn=lambda params,
-                                          i: f"fixed $\\gamma_1$={params[i * 3]['noiseType']['gamma1']}" if i == 0 else f"fixed $\\gamma_2$={params[i * 3]['noiseType']['gamma2']}",
-                        xlabel='lag',
-                        ylabel='CCF')
-
-    return results
 
 
 def calc_and_save():
@@ -179,13 +125,8 @@ def calc_and_save():
     print(f"It took {time.perf_counter() - start_time}ms to finish calculations")
     print('simulations done, write to ' + str(result_path))
 
-    os.makedirs(str(result_path), exist_ok=True)
-    for i, res in enumerate(results):
-        full_result_path = result_path / f'{i}_{res["p"]["noiseType"]["type"]}_{res["p"]["e"]}_{res["p"]["tau1"]}_{res["p"]["tau2"]}.json'
-        with open(full_result_path, 'w+') as f:
-            jsonStr = to_json(res)
-            f.write(jsonStr)
-            f.close()
+    write_simulations_to_disk(result_path, results)
+
     print(f"It took {time.perf_counter() - start_time}ms to write output data")
     write_done = time.perf_counter()
 
@@ -193,13 +134,8 @@ def calc_and_save():
     print(f"It took {time.perf_counter() - write_done}ms to prepare plots")
 
     # plt.show()
-    return res
-
-
-def load_results(base_path: Path):
-    results: List[SimulationResults] = [from_json(open(base_path / path, 'r').read()) for path in os.listdir(base_path)]
-
     return results
+
 
 
 if __name__ == '__main__':
