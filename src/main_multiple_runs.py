@@ -1,11 +1,9 @@
-import json
 import os
 import time
 from pathlib import Path
 from typing import List, Dict
 
 import numpy as np
-import matplotlib.pyplot as plt
 from noise import NoiseType
 from plotting.plotting import plt_time_series, plt_2_graphs_with_same_axis, plt_correlation, plt_sample_from_ensemble, \
     plot_multiple_percentiles, plot_heatmap
@@ -18,7 +16,7 @@ R = 1000  # resolution
 T_cycles = 2
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 initial_condition = 0
-ensemble_runs = 200
+ensemble_runs = 100
 
 params = [
     # WHITE, increasing e
@@ -67,32 +65,43 @@ params = [
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.8, 'gamma2': 0.5}},
 ]
 
-paramsTauVsE =  \
+paramsTauVsE = \
     [{'e': i, 'tau1': 0.1, 'tau2': 0.1, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
     [{'e': i, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
     [{'e': i, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
     [{'e': i, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
     [{'e': i, 'tau1': 1, 'tau2': 1, 'noiseType': {'type': NoiseType.WHITE}} for i in np.arange(0, 1.2, 0.2)] + \
-    [{'e': i, 'tau1': 0.1, 'tau2': 0.1, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
-    [{'e': i, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
-    [{'e': i, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
-    [{'e': i, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)] + \
-    [{'e': i, 'tau1': 1, 'tau2': 1, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in np.arange(0, 1.2, 0.2)]
+    [{'e': i, 'tau1': 0.1, 'tau2': 0.1, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in
+     np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.7, 'tau2': 0.7, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in
+     np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in
+     np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in
+     np.arange(0, 1.2, 0.2)] + \
+    [{'e': i, 'tau1': 1, 'tau2': 1, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for i in
+     np.arange(0, 1.2, 0.2)]
+
 
 def simulate_on_params(ps):
     return ps
 
+
 def get_white_noise(a):
     return a[:7]
+
 
 def get_red_noise(a):
     return a[6:12]
 
+
 def get_symm_increasing_gamma(a):
     return a[12:15]
 
+
 def get_different_taus(a):
     return a[15:21]
+
 
 def get_different_gammas(a):
     return a[21:27]
@@ -108,7 +117,8 @@ def calculations():
     return pool.map(wrapped_delayed_processes, simulate_on_params(paramsTauVsE))
 
 
-def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_correlation, show_different_taus, show_samples):
+def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_correlation, show_different_taus,
+                 show_samples):
     if show_samples:
         plt_sample_from_ensemble(t, round(R / T_cycles), results[0]['p'], results[0]['ensemble'])
 
@@ -120,13 +130,16 @@ def plot_results(results: List[SimulationResults], show_acf, show_ccf, show_corr
                                   ensemble_percentiles(res['ensemble'], lambda df: acf(df['ou2'], lag), res['p'])
                                   ]
                                  for res in results_without_asymm_params]
-        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ou1', 'ou2'], title='Percentiles of Autocorrellation Functions')
+        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ou1', 'ou2'],
+                                  title='Percentiles of autocorrelation Functions')
 
     if show_ccf:
         white_noise_res = [res for res in results if res['p']['noiseType']['type'] == NoiseType.RED]
-        percentile_of_results = [[{'median': res['ccf_median'], 'lower_percentile': res['ccf_lower_percentile'], 'upper_percentile': res['ccf_upper_percentile'], 'p': res['p']}]
+        percentile_of_results = [[{'median': res['ccf_median'], 'lower_percentile': res['ccf_lower_percentile'],
+                                   'upper_percentile': res['ccf_upper_percentile'], 'p': res['p']}]
                                  for res in white_noise_res]
-        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ccf(ou1, ou2)'], title='Percentiles of Cross Correlation Functions')
+        plot_multiple_percentiles(percentile_of_results, 'lag', 'autocov(ou)', labels=['ccf(ou1, ou2)'],
+                                  title='Percentiles of Cross Correlation Functions')
 
     if show_correlation:
         plt_correlation(results)
@@ -182,10 +195,12 @@ def calc_and_save():
     # plt.show()
     return res
 
+
 def load_results(base_path: Path):
     results: List[SimulationResults] = [from_json(open(base_path / path, 'r').read()) for path in os.listdir(base_path)]
 
     return results
+
 
 if __name__ == '__main__':
     calc_and_save()

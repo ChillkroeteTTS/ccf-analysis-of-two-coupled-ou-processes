@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import time
 
 import numpy as np
-from pandas import Series
 
 from main_multiple_runs import load_results
 from noise import NoiseType
@@ -12,8 +11,8 @@ from plotting.plotting import plot_heatmap, gen_2d_data
 
 def fit_max_e_corr(results):
     data = sorted([res for res in results if
-              res['p']['noiseType']['type'] == NoiseType.WHITE and res['p']['tau1'] >= 0.49 and res['p'][
-                  'tau1'] <= 0.51], key=lambda res: res['p']['e'])
+                   res['p']['noiseType']['type'] == NoiseType.WHITE and res['p']['tau1'] >= 0.49 and res['p'][
+                       'tau1'] <= 0.51], key=lambda res: res['p']['e'])
     x = [res['p']['e'] for res in data]
     y = [res['ccf_median'].max() for res in data]
 
@@ -44,8 +43,6 @@ if __name__ == '__main__':
 
     plot_max_e_corr(fit_max_e_corr(results))
     plt.savefig(Path.cwd() / 'src' / 'analyzation' / 'paramVsTau' / 'max_e_corr.pdf')
-
-
 
     plot_heatmap([res for res in results if res['p']['noiseType']['type'] == NoiseType.WHITE], 'tau1', 'e',
                  'CCF Peak height using white noise')
