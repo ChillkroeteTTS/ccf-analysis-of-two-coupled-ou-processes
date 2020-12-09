@@ -10,16 +10,24 @@ import shutil
 
 from file_handling import write_simulations_to_disk
 from noise import NoiseType
-from stats import delayed_ou_processes_ensemble, SimulationResults, from_json
+from stats import delayed_ou_processes_ensemble, SimulationResults
 
 T = 1  # delay
-R = 100  # resolution
 T_cycles = 2
-t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 initial_condition = 0
-ensemble_runs = 30
+R = 1000  # resolution
+ensemble_runs = 500
+# R = 100  # resolution
+# ensemble_runs = 50
 
-params = [
+t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
+
+
+steps = [0.2, 0.5, 0.8]
+params_symmetric_increasing_taus = [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.WHITE}} for e in steps for tau in steps] \
+    + [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for e in steps for tau in steps]
+
+params_1 = [
     # WHITE, increasing e
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE}},
     {'e': 0.5, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.WHITE}},
@@ -45,22 +53,22 @@ params = [
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.2, 'tau1': 0.3, 'tau2': 0.3, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.7, 'gamma2': 0.7}},
 
-    # RED, tau 2 increasing (smaller, slightly bigger, much bigger)
+    # RED, tau 2 increasing (smaller, equal, much bigger)
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.2, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.8, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
 
-    # RED, tau 1 increasing (smaller, slightly bigger, much bigger)
+    # RED, tau 1 increasing (smaller, equal, much bigger)
     {'e': 0.5, 'tau1': 0.2, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.8, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
 
-    # RED, gamma 2 increasing (smaller, slightly bigger, much bigger)
+    # RED, gamma 2 increasing (smaller, equal, much bigger)
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.2}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.8}},
 
-    # RED, gamma 1 increasing (smaller, slightly bigger, much bigger)
+    # RED, gamma 1 increasing (smaller, equal, much bigger)
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.2, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}},
     {'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.8, 'gamma2': 0.5}},
@@ -112,16 +120,20 @@ def wrapped_delayed_processes(p) -> SimulationResults:
     return delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_runs)
 
 
-def calculations() -> List[SimulationResults]:
+def calculations(params) -> List[SimulationResults]:
     # parallelized simulation
     pool = mp.Pool(processes=12)
-    return pool.map(wrapped_delayed_processes, simulate_on_params(paramsTauVsE))
+    return pool.map(wrapped_delayed_processes, params)
 
 
 def calc_and_save():
-    result_path = Path.cwd() / f"results/{ensemble_runs}_{R}_{initial_condition}"
+    params = params_symmetric_increasing_taus
+    name = 'params_symmetric_increasing_taus'
     start_time = time.perf_counter()
-    results: List[SimulationResults] = calculations()
+
+    results: List[SimulationResults] = calculations(params)
+
+    result_path = Path.cwd() / f"results/{name}_{ensemble_runs}_{R}_{initial_condition}"
     print(f"It took {time.perf_counter() - start_time}ms to finish calculations")
     print('simulations done, write to ' + str(result_path))
 

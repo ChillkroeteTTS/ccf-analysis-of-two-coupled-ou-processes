@@ -31,8 +31,9 @@ def normalize(ts):
     return (ts - np.mean(ts)) / np.std(ts)
 
 
-def acf(ser: Series, lags: Number):
-    return Series([ser.autocorr(lag) for lag in range(0, lags)])
+def acf(ser: Series, R: float, t_lag: float):
+    lags = [round(n) for n in np.linspace(0, t_lag * R, 100)]
+    return Series([ser.autocorr(lag) for lag in lags], index=lags)
 
 
 def ccf(df: DataFrame, column1: str, column2: str, range: List[Number]) -> Series:
@@ -108,13 +109,13 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
         range(0, ensemble_count)]
 
     print('calculating acfs for params', R, T_cycles, tau1, tau2, e, noise_type)
-    acf_percentiles = acfs_for_ensemble(ensemble, p)
+    acf_percentiles = acfs_for_ensemble(R, ensemble, p)
 
     print('calculating ccfs for params', R, T_cycles, tau1, tau2, e, noise_type)
-    ccf_percentiles = ensemble_percentiles(ensemble, lambda df: ccf(df, 'ou2', 'ou1', range(450, 550)), p) \
+    x = list(range(420, 581))
+    ccf_percentiles = ensemble_percentiles(ensemble, lambda df: ccf(df, 'ou2', 'ou1', x), p) \
         .add_prefix('ccf_')
 
-    print('calculating ensemble percentiles for params', R, T_cycles, tau1, tau2, e, noise_type)
     grouped = group_by_index(ensemble)
     ensemble_median: DataFrame = grouped.median().add_suffix('_median')
     ensemble_lower_percentile: DataFrame = grouped.quantile(.25).add_suffix('_25p')
@@ -129,24 +130,10 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
             'raw_ensemble': ensemble}
 
 
-def acfs_for_ensemble(ensemble, p) -> DataFrame:
-    lag = 100
-    acf_ensemble_ou1 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou1'], lag), p)
-    acf_ensemble_ou2 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou2'], lag), p)
+def acfs_for_ensemble(R, ensemble, p) -> DataFrame:
+    t_lag = 0.2
+    acf_ensemble_ou1 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou1'], R, t_lag), p)
+    acf_ensemble_ou2 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou2'], R, t_lag), p)
 
     return acf_ensemble_ou1.add_prefix('acf_ou1_').merge(acf_ensemble_ou2.add_prefix('acf_ou2_'), left_index=True,
                                                      right_index=True)
-
-
-def from_json(str: str):
-    nested = json.loads(str)
-    return {
-        'p': nested['p'],
-        'median': pd.read_csv(StringIO(nested['median'])),
-        'lower_percentile': pd.read_csv(StringIO(nested['lower_percentile'])),
-        'upper_percentile': pd.read_csv(StringIO(nested['upper_percentile'])),
-        'ccf_median': Series(nested['ccf_median']),
-        'ccf_lower_percentile': Series(nested['ccf_lower_percentile']),
-        'ccf_upper_percentile': Series(nested['ccf_upper_percentile']),
-        'ensemble': [pd.read_csv(StringIO(e)) for e in nested['ensemble']]
-    }

@@ -99,19 +99,16 @@ def gen_2d_data(results, xkey):
     return z
 
 
-def plot_with_percentiles(results: List[PercentileResult], ax, labels, xlabel='', ylabel=''):
-    for i, result in enumerate(results):
-        median = result['median']
-        ax.fill_between(median.index, result['lower_percentile'], result['upper_percentile'], alpha=0.4)
-        ax.plot(median.index, median, label=labels[i])
+def plot_with_percentiles(results: DataFrame, ax, label, xlabel='', ylabel='', prefix='', suffix=''):
+    median = results[prefix+'median'+suffix]
+    ax.fill_between(median.index, results[prefix+'lower_percentile'+suffix], results[prefix+'upper_percentile'+suffix], alpha=0.4)
+    ax.plot(median.index, median, label=label)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    p = result['p']
-    ax.set_title(f"{p['noiseType']['type']}: e={p['e']:.2f}, $\\tau_1$={p['tau1']}, $\\tau_2$={p['tau2']}")
     ax.legend(loc="upper right")
 
 
-def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, ylabel, labels: List[str], title=''):
+def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, ylabel, labels: List[str], title='', prefix='', suffix=''):
     cols = min(len(results), 3)
     rows = int(np.ceil(len(results) / cols))
     fig, axs = plt.subplots(rows, cols, sharey=True, squeeze=False)
@@ -162,47 +159,47 @@ def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[],
 
 def plt_correlation(results):
     def fit_norm(r):
-        mu, std = norm.fit(np.squeeze(r['ccf']))
+        ccf_median = r['ccf_ensemble']['ccf_median']
+        mu, std = norm.fit(np.squeeze(ccf_median))
         # move fitted normal distribution from center
-        x_middle = r['ccf_shifts'][int(r['ccf_shifts'].size / 2)]
+        x_middle = ccf_median.index[int(ccf_median.index.size / 2)]
         mu = mu + x_middle
-        x = np.linspace(r['ccf_shifts'][0], r['ccf_shifts'][-1], 500)
+        x = np.linspace(ccf_median.iloc[0], ccf_median.iloc[-1], 500)
         p = norm.pdf(x, mu, std)
         return [[x, p], [mu, std]]
 
     def get_param_corr_pairs(getParam, getFixedParam1, getFixedParam2, yFn):
         def isNoiseType(r, type):
-            return r['params']['noiseType']['type'] == type
+            return r['p']['noiseType']['type'] == type
 
-        def same_fixed_param_and_noise_type(r, noiseType):
+        def same_fixed_param_and_noise_type(r: SimulationResults, noiseType):
             red_noise_params = [r for r in results if isNoiseType(r, NoiseType.RED)]
-            firstValueFixedParam1 = getFixedParam1(red_noise_params[0]['params'])
-            firstValueFixedParam2 = getFixedParam2(red_noise_params[0]['params'])
+            firstValueFixedParam1 = getFixedParam1(red_noise_params[0]['p'])
+            firstValueFixedParam2 = getFixedParam2(red_noise_params[0]['p'])
             return isNoiseType(r, noiseType) \
-                   and (getFixedParam1(r['params']) == None or getFixedParam1(r['params']) == firstValueFixedParam1) \
-                   and (getFixedParam2(r['params']) == None or getFixedParam2(r['params']) == firstValueFixedParam2)
+                   and (getFixedParam1(r['p']) == None or getFixedParam1(r['p']) == firstValueFixedParam1) \
+                   and (getFixedParam2(r['p']) == None or getFixedParam2(r['p']) == firstValueFixedParam2)
 
-        parameters_white = [getParam(r['params']) for r in results if
-                            same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
-        parameters_red = [getParam(r['params']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+        parameters_white = [getParam(r['p']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
+        parameters_red = [getParam(r['p']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
         print(parameters_red)
         max_ccf_values_white = [yFn(r) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
         max_ccf_values_red = [yFn(r) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
 
         return [[parameters_white, max_ccf_values_white], [parameters_red, max_ccf_values_red]]
 
-    getE = lambda params: params['e']
-    getTau1 = lambda params: params['tau1']
-    getGamma = lambda params: params['noiseType'].get('gamma1')
+    getE = lambda p: p['e']
+    getTau1 = lambda p: p['tau1']
+    getGamma = lambda p: p['noiseType'].get('gamma1')
 
     [[es_white, maxs_ccf_white], [es_red, maxs_ccf_red]] = get_param_corr_pairs(getE, getTau1, getGamma,
-                                                                                lambda r: np.max(r['ccf']))
+                                                                                lambda r: np.max(r['ccf_ensemble']['ccf_median']))
     [[gammas_white, std_norm_white], [gammas_red, std_norm_red]] = get_param_corr_pairs(getGamma, getTau1, getE,
                                                                                         lambda r: fit_norm(r)[1][1])
 
     fig, axs = plt.subplots(2, 1)
-    axs[0].plot(es_white, maxs_ccf_white, 'x')
-    axs[0].plot(es_red, maxs_ccf_red, 'x', color='r')
+    axs[0].plot(es_white, maxs_ccf_white, 'x-')
+    axs[0].plot(es_red, maxs_ccf_red, 'x-', color='r')
 
     axs[0].title.set_text(f"Correlation between max(ccf) and e")
     axs[0].set_xlabel(f"e")
@@ -219,3 +216,54 @@ def plt_correlation(results):
 
     # plt.tight_layout()
     plt.show()
+
+
+def fwahh(ts):
+    hh = ts.max() / 2
+    i_hh = ts.idxmax()
+
+    i_l = None
+    i_r = None
+    x_l = None
+    x_r = None
+
+    for x in range(0, ts.index.size):
+        i = ts.index[x]
+        if i_l == None and ts[i] > hh:
+            i_l = i
+            x_l = x
+        if i_r == None and i_l is not None and ts[i] < hh:
+            i_r = i
+            x_r = x
+
+        if i_hh > i and i_l is not None and i_r is not None and ts[i] > hh:
+            i_l = i
+            x_l = x
+            i_r = None
+            x_r = None
+
+    return [i_l, i_r], [x_l, x_r], hh
+
+def plot_fwahh(ax, ts):
+    [i_l, i_r], [x_l, x_r], hh = fwahh(ts)
+
+    h_l = ts[i_l]
+    h_r = ts[i_r]
+
+    i_l_i = (ts.index[max(0, x_l + (-1 if h_l > h_r else 1))] + ts.index[x_l]) / 2
+    i_r_i = (ts.index[x_r + (-1 if h_l > h_r else 1)] + ts.index[x_r]) / 2
+    h_l_i = (ts.iloc[max(0, x_l + (-1 if h_l > h_r else 1))] + ts.iloc[x_l]) / 2
+    h_r_i = (ts.iloc[x_r + (-1 if h_l > h_r else 1)] + ts.iloc[x_r]) / 2
+
+    # ax.plot(x_peak_index, height, 'ro')
+    ax.plot([i_l_i, i_r_i], [(h_l_i + h_r_i) / 2, (h_l_i + h_r_i) / 2], 'r--')
+    # ax.plot(i_l_i, h_l_i, 'yo')
+
+    # x_debug = x_r + (-1 if h_l > h_r else 1)
+    # ax.plot(ts.index[x_debug], ts.iloc[x_debug], 'yo')
+    # ax.plot(500, hh, 'yo')
+
+    # ax.plot(i_l_i, h_l_i, 'go')
+    # ax.plot(i_r_i, h_r_i, 'go')
+    # ax.plot(i_l, ts[i_l], 'ro')
+    # ax.plot(i_r, ts[i_r], 'ro')
