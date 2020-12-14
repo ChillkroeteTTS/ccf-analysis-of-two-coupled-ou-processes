@@ -2,7 +2,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib as mlp
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from scipy.stats import norm
 from typing import List
 from noise import NoiseType
@@ -158,17 +158,7 @@ def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[],
 
 
 def plt_correlation(results):
-    def fit_norm(r):
-        ccf_median = r['ccf_ensemble']['ccf_median']
-        mu, std = norm.fit(np.squeeze(ccf_median))
-        # move fitted normal distribution from center
-        x_middle = ccf_median.index[int(ccf_median.index.size / 2)]
-        mu = mu + x_middle
-        x = np.linspace(ccf_median.iloc[0], ccf_median.iloc[-1], 500)
-        p = norm.pdf(x, mu, std)
-        return [[x, p], [mu, std]]
-
-    def get_param_corr_pairs(getParam, getFixedParam1, getFixedParam2, yFn):
+    def apply_to_white_and_red_results(getVariableParam, getFixedParam1, getFixedParam2, yFn):
         def isNoiseType(r, type):
             return r['p']['noiseType']['type'] == type
 
@@ -180,42 +170,56 @@ def plt_correlation(results):
                    and (getFixedParam1(r['p']) == None or getFixedParam1(r['p']) == firstValueFixedParam1) \
                    and (getFixedParam2(r['p']) == None or getFixedParam2(r['p']) == firstValueFixedParam2)
 
-        parameters_white = [getParam(r['p']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
-        parameters_red = [getParam(r['p']) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
-        print(parameters_red)
-        max_ccf_values_white = [yFn(r) for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
-        max_ccf_values_red = [yFn(r) for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+        # get parameter lists
+        simulations_white = [r for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
+        simulations_red = [r for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
 
-        return [[parameters_white, max_ccf_values_white], [parameters_red, max_ccf_values_red]]
+        # create index
+        index_white = [getVariableParam(r['p']) for r in simulations_white]
+        index_red = [getVariableParam(r['p']) for r in simulations_red]
+
+        # get function to results
+        results_white = [yFn(r) for r in simulations_white]
+        results_red = [yFn(r) for r in simulations_red]
+
+        return Series(results_white, index_white).sort_index(), Series(results_red, index_red).sort_index()
 
     getE = lambda p: p['e']
     getTau1 = lambda p: p['tau1']
     getGamma = lambda p: p['noiseType'].get('gamma1')
 
-    [[es_white, maxs_ccf_white], [es_red, maxs_ccf_red]] = get_param_corr_pairs(getE, getTau1, getGamma,
-                                                                                lambda r: np.max(r['ccf_ensemble']['ccf_median']))
-    [[gammas_white, std_norm_white], [gammas_red, std_norm_red]] = get_param_corr_pairs(getGamma, getTau1, getE,
-                                                                                        lambda r: fit_norm(r)[1][1])
+    max_ccf_white, max_ccf_red = apply_to_white_and_red_results(getE, getTau1, getGamma,
+                                                                lambda r: np.max(r['ccf_ensemble']['ccf_median']))
+    fwahh_white, fwahh_red = apply_to_white_and_red_results(getTau1, getE, getGamma,
+                                                            lambda r: fwahh(r['ccf_ensemble']['ccf_median'])[2])
+    fwahhe_white, fwahhe_red = apply_to_white_and_red_results(getE, getTau1, getGamma,
+                                                              lambda r: fwahh(r['ccf_ensemble']['ccf_median'])[2])
 
-    fig, axs = plt.subplots(2, 1)
-    axs[0].plot(es_white, maxs_ccf_white, 'x-')
-    axs[0].plot(es_red, maxs_ccf_red, 'x-', color='r')
+    fig, axs = plt.subplots(3, 1)
 
-    axs[0].title.set_text(f"Correlation between max(ccf) and e")
-    axs[0].set_xlabel(f"e")
+    max_ccf_white.plot(ax=axs[0], style='x-')
+    max_ccf_red.plot(ax=axs[0], style='rx-')
+
+    axs[0].title.set_text(f"Correlation between max(ccf) and $\epsilon$")
+    axs[0].set_xlabel(f"$\epsilon$")
     axs[0].set_ylabel(f"max(ccf)")
     axs[0].legend([f"white noise", f"red noise"])
 
-    axs[1].plot(gammas_white, std_norm_white, 'x')
-    axs[1].plot(gammas_red, std_norm_red, 'x', color='r')
+    fwahh_white.plot(ax=axs[1], style='x-')
+    fwahh_red.plot(ax=axs[1], style='rx-')
 
-    axs[1].title.set_text(f"Correlation between std of a fitted normal distribution and gamma")
-    axs[1].set_xlabel(f"gamma")
-    axs[1].set_ylabel(f"std(normfit(ccf))")
+    axs[1].title.set_text(f"Correlation between fwahh and $\\tau$")
+    axs[1].set_xlabel(f"$\\tau$")
+    axs[1].set_ylabel(f"fwahh(ccf_median)")
     axs[1].legend([f"white noise driven", f"red noise driven"])
 
-    # plt.tight_layout()
-    plt.show()
+    fwahhe_white.plot(ax=axs[2], style='x-')
+    fwahhe_red.plot(ax=axs[2], style='rx-')
+
+    axs[2].title.set_text(f"Correlation between fwahh and $\epsilon$")
+    axs[2].set_xlabel(f"$\\epsilon$")
+    axs[2].set_ylabel(f"fwahh(ccf_median)")
+    axs[2].legend([f"white noise driven", f"red noise driven"])
 
 
 def fwahh(ts):
@@ -242,10 +246,11 @@ def fwahh(ts):
             i_r = None
             x_r = None
 
-    return [i_l, i_r], [x_l, x_r], hh
+    width = i_r - i_l
+    return [i_l, i_r], [x_l, x_r], width, hh
 
 def plot_fwahh(ax, ts):
-    [i_l, i_r], [x_l, x_r], hh = fwahh(ts)
+    [i_l, i_r], [x_l, x_r], width, hh = fwahh(ts)
 
     h_l = ts[i_l]
     h_r = ts[i_r]
@@ -267,3 +272,4 @@ def plot_fwahh(ax, ts):
     # ax.plot(i_r_i, h_r_i, 'go')
     # ax.plot(i_l, ts[i_l], 'ro')
     # ax.plot(i_r, ts[i_r], 'ro')
+

@@ -16,14 +16,14 @@ T = 1  # delay
 T_cycles = 2
 initial_condition = 0
 R = 1000  # resolution
-ensemble_runs = 500
+ensemble_runs = 700
 # R = 100  # resolution
 # ensemble_runs = 50
 
 t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 
 
-steps = [0.2, 0.5, 0.8]
+steps = [0.1, 0.3, 0.5, 0.7, 0.9]
 params_symmetric_increasing_taus = [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.WHITE}} for e in steps for tau in steps] \
     + [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for e in steps for tau in steps]
 

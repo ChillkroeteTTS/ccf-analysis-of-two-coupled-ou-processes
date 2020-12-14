@@ -1,6 +1,0 @@
-- keine analytische methode notwendig
-- Erkenntnisse nach dem Integrations fix neu prufen
-	- welche PArameter veränderung führt zu einer erhöhung des Peaks der ccf?
-	- wleche Parameter veränderung führt zu eienr erhöhung der Breite der CCF? 
-		- Dafür ist vermutlich der FWHM(Full width at half maximum) Ansatz zu implementieren
-		- Ob neuer Ansatz notwendig ist hängt von der neuen Form der CCF ab. Vielleicht ist sie ja doch Gaußisch?
