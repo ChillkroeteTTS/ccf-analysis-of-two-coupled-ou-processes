@@ -1,17 +1,13 @@
 import functools
-
-import json
-from io import StringIO
+from numbers import Number
+from typing import List, Dict
 
 import numpy as np
-from numbers import Number
-
 import pandas as pd
 from pandas import DataFrame, Series
 
-from typing import TypedDict, Any, List, Dict, Tuple
-from noise import white_noise, NoiseType, red_noise
-from ou import ou, mixed_noise_ou
+from noise import white_noise, NoiseType, red_noise, build_mixed_noise_fn
+from ou import ou
 
 
 class PercentileResult(DataFrame):
@@ -45,31 +41,33 @@ def group_by_index(dfs: List[DataFrame]):
     return concatted.groupby(concatted.index)
 
 
-def run_ou_process_realization(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition) -> DataFrame:
+def run_ou_process_realization(R, T_cycles, T_interval, tau1, tau2, e, noise_type, initial_condition) -> DataFrame:
     """
 
-    :param R:
-    :param T_cycles:
-    :param t:
-    :param tau1:
-    :param tau2:
-    :param e:
-    :param noise_type:
-    :param initial_condition:
+    :param R: Resolution
+    :param T_cycles: How many times the delay period is repeated
+    :param T_interval: Simulation period
+    :param tau1: Relaxation coefficient for first OU process
+    :param tau2: Relaxation coefficient for second OU process
+    :param e: Combination parameter for mixed noise $\epsilon \in [0, 1]$
+    :param noise_type: NoiseType.WHITE or NoiseType.RED noise
+    :param initial_condition: Initial condition for the process
     :return:
         Dataframe containing all time series relevant for both processes as well as the processes themself
     """
-    noise = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
+    noise_fn = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
 
-    noise1 = noise(t.size)
-    noise2 = noise(t.size)
+    res_ou1 = ou(T_interval, tau1, noise_fn, initial_condition)
+    ou1 = res_ou1[:, 2]
+    noise1 = res_ou1[:, 1]
 
-    ou1 = ou(np.dstack((t, noise1))[0], tau1, initial_condition)
-    ou1 = ou1[:, 2]
+    mixed_noise_fn = build_mixed_noise_fn(T_interval, noise_fn, noise1, R, T_cycles, e)
 
-    [mixed_noise, ou2] = mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, initial_condition)
+    res_ou2 = ou(T_interval, tau1, mixed_noise_fn, initial_condition)
+    ou2 = res_ou2[:, 2]
+    mixed_noise = res_ou2[:, 1]
 
-    return DataFrame({'noise1': noise1, 'noise2': noise2, 'mixed_noise': mixed_noise, 'ou1': ou1, 'ou2': ou2})
+    return DataFrame({'noise1': noise1, 'mixed_noise': mixed_noise, 'ou1': ou1, 'ou2': ou2})
 
 
 # Returns the index of the value in the time series where the integral of the curve reaches 50%
@@ -87,7 +85,7 @@ def i_50(ts):
     return i
 
 
-def ensemble_percentiles(ensemble: List[DataFrame], fn, p) -> DataFrame:
+def ensemble_percentiles(ensemble: List[DataFrame], fn) -> DataFrame:
     results = [fn(realization) for realization in ensemble]
     grouped = group_by_index(results)
     return DataFrame({
@@ -97,14 +95,29 @@ def ensemble_percentiles(ensemble: List[DataFrame], fn, p) -> DataFrame:
     })
 
 
-# Simulates ensembles of both OU processes and caculates a cross correlation functions ensemble on it
-def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_count) -> SimulationResults:
+def delayed_ou_processes_ensemble(R: float,
+                                  T_cycles: int,
+                                  t_interval: List[float],
+                                  p: dict,
+                                  initial_condition: float,
+                                  ensemble_count: int) -> SimulationResults:
+    """
+    Simulates ensembles of both OU processes and caculates a cross correlation functions ensemble on it
+    :param R: Resolution
+    :param T_cycles: How many times the delay period is repeated
+    :param t_interval: Simulation period
+    :param p: Parameter set
+    :param initial_condition: Initial condition of the process
+    :param ensemble_count: Number of process realizations
+    :return: Simulation results containing the parameter set, the simulated median, 25p and 75p percentile of the
+    simulated ensemble, the acf ensemble percentiles, the ccf percentiles and the unaggregated ensemble simulation
+    """
     tau1 = p['tau1']
     tau2 = p['tau2']
     e = p['e']
     noise_type = p['noiseType']
     ensemble: List[DataFrame] = [
-        run_ou_process_realization(R, T_cycles, t, tau1, tau2, e, noise_type, initial_condition)
+        run_ou_process_realization(R, T_cycles, t_interval, tau1, tau2, e, noise_type, initial_condition)
         for _ in
         range(0, ensemble_count)]
 
@@ -113,7 +126,7 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
 
     print('calculating ccfs for params', R, T_cycles, tau1, tau2, e, noise_type)
     x = list(range(420, 581))
-    ccf_percentiles = ensemble_percentiles(ensemble, lambda df: ccf(df, 'ou2', 'ou1', x), p) \
+    ccf_percentiles = ensemble_percentiles(ensemble, lambda df: ccf(df, 'ou2', 'ou1', x)) \
         .add_prefix('ccf_')
 
     grouped = group_by_index(ensemble)
@@ -132,8 +145,8 @@ def delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble
 
 def acfs_for_ensemble(R, ensemble, p) -> DataFrame:
     t_lag = 0.2
-    acf_ensemble_ou1 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou1'], R, t_lag), p)
-    acf_ensemble_ou2 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou2'], R, t_lag), p)
+    acf_ensemble_ou1 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou1'], R, t_lag))
+    acf_ensemble_ou2 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou2'], R, t_lag))
 
     return acf_ensemble_ou1.add_prefix('acf_ou1_').merge(acf_ensemble_ou2.add_prefix('acf_ou2_'), left_index=True,
                                                      right_index=True)

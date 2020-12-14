@@ -17,10 +17,10 @@ T_cycles = 2
 initial_condition = 0
 R = 1000  # resolution
 ensemble_runs = 700
-# R = 100  # resolution
-# ensemble_runs = 50
+R = 100  # resolution
+ensemble_runs = 50
 
-t = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
+T_interval = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
 
 
 steps = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -117,7 +117,7 @@ def get_different_gammas(a):
 
 
 def wrapped_delayed_processes(p) -> SimulationResults:
-    return delayed_ou_processes_ensemble(R, T_cycles, t, p, initial_condition, ensemble_runs)
+    return delayed_ou_processes_ensemble(R, T_cycles, T_interval, p, initial_condition, ensemble_runs)
 
 
 def calculations(params) -> List[SimulationResults]:

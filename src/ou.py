@@ -1,47 +1,59 @@
 import functools
-from typing import List
+from typing import List, Callable, Tuple
 
 import numpy as np
 
 
-def ou_step(init_cond, tau, history: List, n):
-    hits_size = len(history)
-    t = n[0]
-    n = n[1]
-    if hits_size > 0:
-        prev_x = history[hits_size - 1][2]
-        prev_t = history[hits_size - 1][0]
+def euler_maruyama_method_step(init_cond: float,
+                               drift: Callable[[float], float],
+                               diffusion: Callable[[float], float],
+                               history: List,
+                               t_and_w: Tuple[float, float]):
+    """
+
+    :param init_cond: Initial condition of the process
+    :param drift: Drift term
+    :param diffusion: Diffusion term
+    :param history: Collection of tuples described in return type
+    :param t: T current time step t
+    :param delta_w_t: random increment $\Delta w_t = w_t - w_{t-1}$
+    :return: A tuple of time step t, random increment value $\Delta w_t$ and process result x(t) = x
+    """
+    t, delta_w_t = t_and_w
+    hist_length = len(history)
+    is_initial_step = hist_length > 0
+    if is_initial_step:
+        prev_x = history[-1][2]
+        prev_t = history[-1][0]
         delta_t = (t - prev_t)
-        x = prev_x + delta_t * (-prev_x / tau) + np.sqrt(2 / tau) * np.sqrt(delta_t) * n
+        x = prev_x + delta_t * drift(prev_x) + diffusion(prev_x) * delta_w_t
     else:
         x = init_cond
-    history.append([t, n,  x])
+    history.append([t, delta_w_t, x])
     return history
 
-def ou(noise_arr, tau, initial_condition=0):
-    return np.array(functools.reduce(functools.partial(ou_step, initial_condition, tau),
-                            noise_arr,
-                            []))
+
+def euler_maruyama_method(initial_condition,
+                          t_interval,
+                          drift: Callable[[float], float],
+                          diffusion: Callable[[float], float],
+                          generate_random_increments: Callable[[float, float], List[float]]):
+    """
+    Estimates a numerical solution to the non-linear SDE defined by drift term, diffusion term and
+    :param init_cond: Initial condition of the process
+    :param t_interval: Array containing timesteps in interval t_i \in [0, T_total]
+    :param drift: Drift term
+    :param diffusion: Diffusion term
+    :param generate_random_increments: Function taking the amount of increments and $\Delta t$ as input and returns  a list of increments
+    :return: A collection of tuples of time step t, noise value n(t) = n and process result x(t) = x
+    """
+    delta_t = t_interval[1] - t_interval[0]
+    random_increments = generate_random_increments(len(t_interval), delta_t)
+    return np.array(functools.reduce(functools.partial(euler_maruyama_method_step,
+                                                       initial_condition, drift, diffusion),
+                                     zip(t_interval, random_increments),
+                                     []))
 
 
-def mixed_noise_ou(t, noise1, noise2, R, T_cycles, e, tau2, inital_condition):
-    # Zeitpunkt bei dem der mixed noise Prozess aufgrund der Verzögerung starten kann (t1 = 1)
-    i_t_1 = int(np.ceil(R / T_cycles))
-    # Zeitbereich in dem der mn prozess läuft
-    t_mixed = t[i_t_1:]
-    pow_e = np.power(e, 2.0)
-
-    # Noise im Zeitinterval t0 - t1
-    noise_t0_t1 = noise1[:i_t_1]
-    # Noise im Zeitinterval t1 - ende (t2)
-    noise_t1_t2 = noise2[i_t_1:]
-
-    mixed_noise = noise_t0_t1 * np.sqrt(pow_e) + noise_t1_t2 * np.sqrt(1 - pow_e)
-
-    # [[t1, mn0], [t2, mn1] ...]
-    ou2_noise = np.concatenate((noise2[:i_t_1], mixed_noise))
-    partitioned_noise = np.dstack((t, ou2_noise))[0]
-
-    ou2 = ou(partitioned_noise, tau2, inital_condition)
-
-    return [ou2_noise, ou2[:, 2]]
+def ou(t_interval, tau, generate_noise_increments: Callable[[float, float], List[float]], initial_condition=0):
+    return euler_maruyama_method(initial_condition, t_interval, lambda prev_x: (-prev_x / tau), lambda prev_x: np.sqrt(2 / tau), generate_noise_increments)
