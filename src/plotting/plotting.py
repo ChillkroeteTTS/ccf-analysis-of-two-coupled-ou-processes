@@ -148,20 +148,23 @@ def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[],
     fig.show()
 
 
-def plt_correlation(results, steps, steps_tau, yFn, title=''):
+def plt_correlation(results, steps_x, steps_y,
+                    yFn,
+                    title='',
+                    plt_red=True,
+                    get_x=lambda p: p['e'],
+                    get_y=lambda p: p['tau1'],
+                    ylabel = '$\\tau$',
+                    xlabel='$\epsilon$'
+                    ):
     z_white = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.WHITE
-                                and r['p']['e'] == e
-                                and r['p']['tau1'] == tau
-                                ][0]) for e in steps] for tau in steps_tau]
+                                and math.isclose(get_x(r['p']), x)
+                                and math.isclose(get_y(r['p']), y)
+                                ][0]) for x in steps_x] for y in steps_y]
 
-    z_red = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.RED
-                              and r['p']['e'] == e
-                              and r['p']['tau1'] == tau
-                              and r['p']['noiseType']['gamma1'] == 0.5
-                              ][0]) for e in steps] for tau in steps_tau]
-
-    fig, axs = plt.subplots(1, 2)
-    xx, yy = np.meshgrid(steps, steps_tau)
+    fig, axs = plt.subplots(1, 2 if plt_red else 1)
+    ax1 = axs[0] if plt_red else axs
+    xx, yy = np.meshgrid(steps_x, steps_y)
 
     med = np.median(np.array(z_white))
     std = np.std(np.array(z_white))
@@ -169,14 +172,20 @@ def plt_correlation(results, steps, steps_tau, yFn, title=''):
     vmax = med + std * 1
 
     levels = np.linspace(vmin, vmax, 12)
-    map = axs[0].contour(steps, steps_tau, z_white, levels=levels)
-    axs[0].scatter([e for e in steps for tau in steps_tau], [tau for e in steps for tau in steps_tau], marker='x')
-    axs[0].set(title='white noise', xlabel='$\epsilon$', ylabel='$\\tau$')
+    map = ax1.contour(steps_x, steps_y, z_white, levels=levels)
+    ax1.scatter([e for e in steps_x for tau in steps_y], [tau for e in steps_x for tau in steps_y], marker='x')
+    ax1.set(title='white noise', xlabel=xlabel, ylabel=ylabel)
 
-    xx, yy = np.meshgrid(steps, steps_tau)
-    map = axs[1].contour(steps, steps_tau, z_red, levels=levels, extend='min')
-    axs[1].scatter([e for e in steps for tau in steps_tau], [tau for e in steps for tau in steps_tau], marker='x')
-    axs[1].set(title='red noise', xlabel='$\epsilon$', ylabel='$\\tau$')
+    if plt_red:
+        z_red = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.RED
+                         and math.isclose(get_x(r['p']), x)
+                         and math.isclose(get_y(r['p']), y)
+                         ][0]) for x in steps_x] for y in steps_y]
+        xx, yy = np.meshgrid(steps_x, steps_y)
+        map = axs[1].contour(steps_x, steps_y, z_red, levels=levels, extend='min')
+        axs[1].scatter([x for x in steps_x for y in steps_y], [y for x in steps_x for y in steps_y], marker='x')
+        axs[1].set(title='red noise', xlabel=xlabel, ylabel=ylabel)
+
     plt.colorbar(map)
     fig.suptitle(title)
 
