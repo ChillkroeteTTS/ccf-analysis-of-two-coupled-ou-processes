@@ -1,0 +1,23 @@
+% Encoding: UTF-8
+
+@Misc{ouProc,
+  author    = {Finch, S.},
+  title     = {Ornstein-Uhlenbeck Process},
+  month     = may,
+  year      = {2004},
+  timestamp = {2019-07-07},
+  url       = {https://oeis.org/A249417/a249417.pdf},
+}
+
+@Misc{numSim,
+  author       = {Higham, Desmond J.},
+  howpublished = {SIAM Review Vol. 43 ,No. 3 ,pp. 525–546},
+  title        = {An Algorithmic Introduction to Numerical Simulation of Stochastic Differential Equations},
+  year         = {2001},
+  abstract     = {A practical and accessible introduction to numerical methods for stochastic differentialequations is given.  The reader is assumed to be familiar with Euler’s method for de-terministic differential equations and to have at least an intuitive feel for the concept ofa random variable; however, no knowledge of advanced probabilit ytheor yor stochasticprocesses is assumed. The article is built around 10 MATLAB programs, and the topicscovered include stochastic integration, the Euler–Maruyama method, Milstein’s method,strong and weak convergence, linear stability, and the stochastic chain rule.},
+  keywords     = {Euler–Maruyama method, MATLAB, Milstein method, Monte Carlo, stochastic simula-tion, strong and weak convergence},
+  timestamp    = {2020-12-15},
+  url          = {https://epubs.siam.org/doi/pdf/10.1137/S0036144500378302},
+}
+
+@Comment{jabref-meta: databaseType:bibtex;}

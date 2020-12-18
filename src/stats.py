@@ -27,13 +27,25 @@ def normalize(ts):
     return (ts - np.mean(ts)) / np.std(ts)
 
 
-def acf(ser: Series, R: float, t_lag: float):
-    lags = [round(n) for n in np.linspace(0, t_lag * R, 100)]
-    return Series([ser.autocorr(lag) for lag in lags], index=lags)
+def acf(ser: Series, R: float, t_end: float, t_lag: float):
+    """
+
+    :param ser: time series
+    :param R: Simulation resolution
+    :param t_end: End of time interval
+    :param t_lag: Max time difference for which the correlation value is calculated
+    :return: The ACF for lags in interval 0-t_lag
+    """
+    lag_resolution = 50
+    lags_i = [round(n) for n in np.linspace(0, t_lag / t_end * R , lag_resolution)]
+    return Series([ser.autocorr(lag_i) for lag_i in lags_i], index=[float(lag_i) / R * t_end for lag_i in lags_i])
 
 
-def ccf(df: DataFrame, column1: str, column2: str, range: List[Number]) -> Series:
-    return Series([df[column1].corr(df[column2].shift(lag)) for lag in range], index=range)
+def ccf(df: DataFrame, column1: str, column2: str, t_lag_start, t_lag_end, R: float, t_end: float) -> Series:
+    lag_resolution = 50
+    to_i = lambda t: t / t_end * R
+    lags_i = [round(n) for n in np.linspace(to_i(t_lag_start), to_i(t_lag_end), lag_resolution)]
+    return Series([df[column1].corr(df[column2].shift(lag)) for lag in lags_i], index=np.linspace(t_lag_start, t_lag_end, lag_resolution))
 
 
 def group_by_index(dfs: List[DataFrame]):
@@ -56,14 +68,13 @@ def run_ou_process_realization(R, T_cycles, T_interval, tau1, tau2, e, noise_typ
         Dataframe containing all time series relevant for both processes as well as the processes themself
     """
     noise_fn = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
-
     res_ou1 = ou(T_interval, tau1, noise_fn, initial_condition)
     ou1 = res_ou1[:, 2]
     noise1 = res_ou1[:, 1]
 
     mixed_noise_fn = build_mixed_noise_fn(T_interval, noise_fn, noise1, R, T_cycles, e)
 
-    res_ou2 = ou(T_interval, tau1, mixed_noise_fn, initial_condition)
+    res_ou2 = ou(T_interval, tau2, mixed_noise_fn, initial_condition)
     ou2 = res_ou2[:, 2]
     mixed_noise = res_ou2[:, 1]
 
@@ -95,7 +106,8 @@ def ensemble_percentiles(ensemble: List[DataFrame], fn) -> DataFrame:
     })
 
 
-def delayed_ou_processes_ensemble(R: float,
+def delayed_ou_processes_ensemble(T_total: float,
+                                  R: float,
                                   T_cycles: int,
                                   t_interval: List[float],
                                   p: dict,
@@ -122,11 +134,10 @@ def delayed_ou_processes_ensemble(R: float,
         range(0, ensemble_count)]
 
     print('calculating acfs for params', R, T_cycles, tau1, tau2, e, noise_type)
-    acf_percentiles = acfs_for_ensemble(R, ensemble, p)
+    acf_percentiles = acfs_for_ensemble(T_total, R, ensemble)
 
     print('calculating ccfs for params', R, T_cycles, tau1, tau2, e, noise_type)
-    x = list(range(420, 581))
-    ccf_percentiles = ensemble_percentiles(ensemble, lambda df: ccf(df, 'ou2', 'ou1', x)) \
+    ccf_percentiles = ensemble_percentiles(ensemble, lambda df: ccf(df, 'ou2', 'ou1', 0.8, 1.2, R, T_total)) \
         .add_prefix('ccf_')
 
     grouped = group_by_index(ensemble)
@@ -143,10 +154,10 @@ def delayed_ou_processes_ensemble(R: float,
             'raw_ensemble': ensemble}
 
 
-def acfs_for_ensemble(R, ensemble, p) -> DataFrame:
-    t_lag = 0.2
-    acf_ensemble_ou1 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou1'], R, t_lag))
-    acf_ensemble_ou2 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou2'], R, t_lag))
+def acfs_for_ensemble(T_total, R, ensemble) -> DataFrame:
+    t_lag = 0.4
+    acf_ensemble_ou1 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou1'], R, T_total, t_lag))
+    acf_ensemble_ou2 = ensemble_percentiles(ensemble, lambda realization: acf(realization['ou2'], R, T_total, t_lag))
 
     return acf_ensemble_ou1.add_prefix('acf_ou1_').merge(acf_ensemble_ou2.add_prefix('acf_ou2_'), left_index=True,
                                                      right_index=True)

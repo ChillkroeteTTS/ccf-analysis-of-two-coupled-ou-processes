@@ -1,10 +1,12 @@
+import math
+from turtle import pd
+
 import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib as mlp
 from pandas import DataFrame, Series
-from scipy.stats import norm
-from typing import List
+from typing import List, Callable
 from noise import NoiseType
 from stats import PercentileResult, SimulationResults
 
@@ -52,19 +54,6 @@ def plt_2_graphs_with_same_axis(t, y1s, y2s, xlabel='', ylabel='', legends=[[], 
     plt.show()
 
 
-def plt_acf(y1, y2):
-    fig, axs = plt.subplots(2, 1, sharey=True)
-    fig.suptitle('Auto Correlation Functions')
-    axs[0].plot(y1)
-    axs[1].plot(y2)
-    axs[0].legend(['ACF of ou1'])
-    axs[1].legend(['ACF of ou2'])
-    for ax in axs.flat:
-        ax.axhline(0, linestyle='--', color='red')
-    # plt.tight_layout()
-    plt.show()
-
-
 def standart_title(params, i):
     return f"e: {params[i]['e']}, tau: {params[i]['tau1']}, gamma: {params[i].get('noiseType').get('gamma1')}"
 
@@ -100,15 +89,17 @@ def gen_2d_data(results, xkey):
 
 
 def plot_with_percentiles(results: DataFrame, ax, label, xlabel='', ylabel='', prefix='', suffix=''):
-    median = results[prefix+'median'+suffix]
-    ax.fill_between(median.index, results[prefix+'lower_percentile'+suffix], results[prefix+'upper_percentile'+suffix], alpha=0.4)
+    median = results[prefix + 'median' + suffix]
+    ax.fill_between(median.index, results[prefix + 'lower_percentile' + suffix],
+                    results[prefix + 'upper_percentile' + suffix], alpha=0.4)
     ax.plot(median.index, median, label=label)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.legend(loc="upper right")
 
 
-def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, ylabel, labels: List[str], title='', prefix='', suffix=''):
+def plot_multiple_percentiles(results: List[List[PercentileResult]], xlabel, ylabel, labels: List[str], title='',
+                              prefix='', suffix=''):
     cols = min(len(results), 3)
     rows = int(np.ceil(len(results) / cols))
     fig, axs = plt.subplots(rows, cols, sharey=True, squeeze=False)
@@ -157,69 +148,37 @@ def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[],
     fig.show()
 
 
-def plt_correlation(results):
-    def apply_to_white_and_red_results(getVariableParam, getFixedParam1, getFixedParam2, yFn):
-        def isNoiseType(r, type):
-            return r['p']['noiseType']['type'] == type
+def plt_correlation(results, steps, steps_tau, yFn, title=''):
+    z_white = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.WHITE
+                                and r['p']['e'] == e
+                                and r['p']['tau1'] == tau
+                                ][0]) for e in steps] for tau in steps_tau]
 
-        def same_fixed_param_and_noise_type(r: SimulationResults, noiseType):
-            red_noise_params = [r for r in results if isNoiseType(r, NoiseType.RED)]
-            firstValueFixedParam1 = getFixedParam1(red_noise_params[0]['p'])
-            firstValueFixedParam2 = getFixedParam2(red_noise_params[0]['p'])
-            return isNoiseType(r, noiseType) \
-                   and (getFixedParam1(r['p']) == None or getFixedParam1(r['p']) == firstValueFixedParam1) \
-                   and (getFixedParam2(r['p']) == None or getFixedParam2(r['p']) == firstValueFixedParam2)
+    z_red = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.RED
+                              and r['p']['e'] == e
+                              and r['p']['tau1'] == tau
+                              and r['p']['noiseType']['gamma1'] == 0.5
+                              ][0]) for e in steps] for tau in steps_tau]
 
-        # get parameter lists
-        simulations_white = [r for r in results if same_fixed_param_and_noise_type(r, NoiseType.WHITE)]
-        simulations_red = [r for r in results if same_fixed_param_and_noise_type(r, NoiseType.RED)]
+    fig, axs = plt.subplots(1, 2)
+    xx, yy = np.meshgrid(steps, steps_tau)
 
-        # create index
-        index_white = [getVariableParam(r['p']) for r in simulations_white]
-        index_red = [getVariableParam(r['p']) for r in simulations_red]
+    med = np.median(np.array(z_white))
+    std = np.std(np.array(z_white))
+    vmin = med - std * 1
+    vmax = med + std * 1
 
-        # get function to results
-        results_white = [yFn(r) for r in simulations_white]
-        results_red = [yFn(r) for r in simulations_red]
+    levels = np.linspace(vmin, vmax, 12)
+    map = axs[0].contour(steps, steps_tau, z_white, levels=levels)
+    axs[0].scatter([e for e in steps for tau in steps_tau], [tau for e in steps for tau in steps_tau], marker='x')
+    axs[0].set(title='white noise', xlabel='$\epsilon$', ylabel='$\\tau$')
 
-        return Series(results_white, index_white).sort_index(), Series(results_red, index_red).sort_index()
-
-    getE = lambda p: p['e']
-    getTau1 = lambda p: p['tau1']
-    getGamma = lambda p: p['noiseType'].get('gamma1')
-
-    max_ccf_white, max_ccf_red = apply_to_white_and_red_results(getE, getTau1, getGamma,
-                                                                lambda r: np.max(r['ccf_ensemble']['ccf_median']))
-    fwahh_white, fwahh_red = apply_to_white_and_red_results(getTau1, getE, getGamma,
-                                                            lambda r: fwahh(r['ccf_ensemble']['ccf_median'])[2])
-    fwahhe_white, fwahhe_red = apply_to_white_and_red_results(getE, getTau1, getGamma,
-                                                              lambda r: fwahh(r['ccf_ensemble']['ccf_median'])[2])
-
-    fig, axs = plt.subplots(3, 1)
-
-    max_ccf_white.plot(ax=axs[0], style='x-')
-    max_ccf_red.plot(ax=axs[0], style='rx-')
-
-    axs[0].title.set_text(f"Correlation between max(ccf) and $\epsilon$")
-    axs[0].set_xlabel(f"$\epsilon$")
-    axs[0].set_ylabel(f"max(ccf)")
-    axs[0].legend([f"white noise", f"red noise"])
-
-    fwahh_white.plot(ax=axs[1], style='x-')
-    fwahh_red.plot(ax=axs[1], style='rx-')
-
-    axs[1].title.set_text(f"Correlation between fwahh and $\\tau$")
-    axs[1].set_xlabel(f"$\\tau$")
-    axs[1].set_ylabel(f"fwahh(ccf_median)")
-    axs[1].legend([f"white noise driven", f"red noise driven"])
-
-    fwahhe_white.plot(ax=axs[2], style='x-')
-    fwahhe_red.plot(ax=axs[2], style='rx-')
-
-    axs[2].title.set_text(f"Correlation between fwahh and $\epsilon$")
-    axs[2].set_xlabel(f"$\\epsilon$")
-    axs[2].set_ylabel(f"fwahh(ccf_median)")
-    axs[2].legend([f"white noise driven", f"red noise driven"])
+    xx, yy = np.meshgrid(steps, steps_tau)
+    map = axs[1].contour(steps, steps_tau, z_red, levels=levels, extend='min')
+    axs[1].scatter([e for e in steps for tau in steps_tau], [tau for e in steps for tau in steps_tau], marker='x')
+    axs[1].set(title='red noise', xlabel='$\epsilon$', ylabel='$\\tau$')
+    plt.colorbar(map)
+    fig.suptitle(title)
 
 
 def fwahh(ts):
@@ -249,6 +208,7 @@ def fwahh(ts):
     width = i_r - i_l
     return [i_l, i_r], [x_l, x_r], width, hh
 
+
 def plot_fwahh(ax, ts):
     [i_l, i_r], [x_l, x_r], width, hh = fwahh(ts)
 
@@ -273,3 +233,43 @@ def plot_fwahh(ax, ts):
     # ax.plot(i_l, ts[i_l], 'ro')
     # ax.plot(i_r, ts[i_r], 'ro')
 
+
+def plt_acf(steps_e, steps_tau, steps_len, results, param_selector: Callable[[float, float, dict], bool],
+            prefix='acf_'):
+    fig, axs = plt.subplots(steps_len - 2, steps_len - 2, sharex=True)
+    labels = ['ou1', 'ou2']
+    xlabel = 'lag'
+    name = prefix[:-1]
+    ylabel = name
+
+    for i, tau in enumerate(steps_tau[1:-1]):
+        for j, e in enumerate(steps_e[1:-1]):
+            res = [res for res in results if
+                   param_selector(tau, e, res['p'])][
+                0]
+            median = res[f'{prefix}ensemble'][f'{prefix}ou1_median']
+
+            plot_with_percentiles(res[f'{prefix}ensemble'], axs[i][j], f'{name}(ou1)', prefix=f'{prefix}ou1_')
+            plot_with_percentiles(res[f'{prefix}ensemble'], axs[i][j], f'{name}(ou2)', prefix=f'{prefix}ou2_')
+
+            axs[i][j].set_xlabel(xlabel)
+
+            for lag in [median.index[round(len(median.index) * 0.2)]]:
+                y_ou1 = median[lag]
+                y_ou2 = res[f'{prefix}ensemble'][f'{prefix}ou2_median'][lag]
+
+                axs[i][j].plot([lag, lag], [0, y_ou1], color='blue', linestyle='--')
+                axs[i][j].plot([lag, lag], [0, y_ou2], color='orange', linestyle='--')
+
+                axs[i][j].plot([0, lag], [y_ou1, y_ou1], color='blue', linestyle='--')
+                axs[i][j].plot([0, lag], [y_ou2, y_ou2], color='orange', linestyle='--')
+
+            if i == 0:
+                axs[i][j].set_title(f"$\epsilon$ = {e}")
+            if j == 0:
+                #             fig.annotate(f"$\tau$ = {tau}", [0, 1])
+                axs[i][j].set_ylabel(f"$\\tau$ = {tau}")
+
+            # lags = median.index
+            # an_acf = Series([math.e ** -(lag/tau) for lag in lags], index=lags)
+            # an_acf.plot(ax=axs[i][j], color='green', label='analytical solution ou1')

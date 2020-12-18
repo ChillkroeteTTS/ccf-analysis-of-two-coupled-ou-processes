@@ -1,0 +1,19 @@
+% Encoding: UTF-8
+
+@Misc{ouProc,
+  author    = {Finch, S.},
+  title     = {Ornstein-Uhlenbeck Process},
+  month     = may,
+  year      = {2004},
+  timestamp = {2019-07-07},
+  url       = {https://oeis.org/A249417/a249417.pdf},
+}
+
+@Misc{numSim,
+  author    = {Higham, Desmond J.},
+  title     = {An Algorithmic Introduction to Numerical Simulation of Stochastic Differential Equations},
+  timestamp = {2020-12-15},
+  url       = {https://epubs.siam.org/doi/pdf/10.1137/S0036144500378302},
+}
+
+@Comment{jabref-meta: databaseType:bibtex;}

@@ -14,18 +14,24 @@ from stats import delayed_ou_processes_ensemble, SimulationResults
 
 T = 1  # delay
 T_cycles = 2
+T_total = T * T_cycles
 initial_condition = 0
-R = 1000  # resolution
-ensemble_runs = 700
-R = 100  # resolution
-ensemble_runs = 50
+R = 500  # resolution
+ensemble_runs = 1000
+# R = 100  # resolution
+# ensemble_runs = 50
 
-T_interval = np.linspace(0, T_cycles, R)  # run simulation for 2 noise cycles
+t_interval = np.linspace(0, T_total, R)  # run simulation for 2 noise cycles
 
 
-steps = [0.1, 0.3, 0.5, 0.7, 0.9]
-params_symmetric_increasing_taus = [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.WHITE}} for e in steps for tau in steps] \
-    + [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for e in steps for tau in steps]
+steps_e = np.linspace(0.05, 0.95, 7)
+steps_tau = np.linspace(0.05, 0.95, 7)
+steps_gamma = np.linspace(0.05, 0.95, 7)
+params_symmetric_increasing_taus = [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.WHITE}} for e in steps_e for tau in steps_tau] \
+    + [{'e': e, 'tau1': tau, 'tau2': tau, 'noiseType': {'type': NoiseType.RED, 'gamma1': 0.5, 'gamma2': 0.5}} for e in steps_e for tau in steps_tau]
+
+params_asymetric_increasing_taus =[{'e': 0.5, 'tau1': tau1, 'tau2': tau2, 'noiseType': {'type': NoiseType.WHITE}} for tau1 in steps_tau for tau2 in steps_tau]
+params_asymetric_increasing_gammas =[{'e': 0.5, 'tau1': 0.5, 'tau2': 0.5, 'noiseType': {'type': NoiseType.RED, 'gamma1': gamma1, 'gamma2': gamma2}} for gamma1 in steps_gamma for gamma2 in steps_gamma]
 
 params_1 = [
     # WHITE, increasing e
@@ -117,7 +123,7 @@ def get_different_gammas(a):
 
 
 def wrapped_delayed_processes(p) -> SimulationResults:
-    return delayed_ou_processes_ensemble(R, T_cycles, T_interval, p, initial_condition, ensemble_runs)
+    return delayed_ou_processes_ensemble(T_total, R, T_cycles, t_interval, p, initial_condition, ensemble_runs)
 
 
 def calculations(params) -> List[SimulationResults]:
@@ -127,8 +133,8 @@ def calculations(params) -> List[SimulationResults]:
 
 
 def calc_and_save():
-    params = params_symmetric_increasing_taus
-    name = 'params_symmetric_increasing_taus'
+    params = params_asymetric_increasing_gammas
+    name = 'params_asymetric_increasing_gammas'
     start_time = time.perf_counter()
 
     results: List[SimulationResults] = calculations(params)

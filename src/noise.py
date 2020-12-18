@@ -7,7 +7,7 @@ class NoiseType:
     RED = 'red noise'
 
 def white_noise(n: int, delta_t: float) -> List[float]:
-    return list(np.random.normal(0, np.sqrt(delta_t), n))
+    return list(np.random.normal(loc=0, scale=np.sqrt(delta_t), size=n))
 
 
 def red_noise(r: float, n: int, delta_t: float) -> List[float]:

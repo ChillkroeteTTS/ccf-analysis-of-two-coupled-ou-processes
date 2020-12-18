@@ -56,4 +56,7 @@ def euler_maruyama_method(initial_condition,
 
 
 def ou(t_interval, tau, generate_noise_increments: Callable[[float, float], List[float]], initial_condition=0):
-    return euler_maruyama_method(initial_condition, t_interval, lambda prev_x: (-prev_x / tau), lambda prev_x: np.sqrt(2 / tau), generate_noise_increments)
+    return euler_maruyama_method(initial_condition,
+                                 t_interval,
+                                 lambda prev_x: (-prev_x / tau),
+                                 lambda prev_x: np.sqrt(2. / tau), generate_noise_increments)
