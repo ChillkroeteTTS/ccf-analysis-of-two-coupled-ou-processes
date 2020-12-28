@@ -296,7 +296,8 @@ Following parameters control the simulation:
 	\item $\gamma_i$ - Correlation coefficient of the i-th red noise. $\gamma_i \in [0, 1]$.
 \end{itemize}.
 
-Parameter sets chosen for the simulation can be refered to in table \ref{t/parameter} in chapter \ref{ch/appendix}.
+Three different parameter sets where chosen to study different research questions. The first set is used to find differences in the \ac{ACF}/\ac{CCF} behavior caused by different spectral properties of the OU powering noise processes. Also it is used to find effects of symmetrical changes to $\tau_1$/$\tau_2$ and $\epsilon$. The second set is used to study effects of asymmetric changes to $\tau_1$/$\tau_2$ whereas the third set focuses on asymmetric changes to $\gamma_1$/$\gamma_2$.
+Details for each parameters set can be taken from table \ref{t/a/parameterSet1}, \ref{t/a/parameterSet2} and \ref{t/a/parameterSet3} in chapter \ref{ch/appendix}.
 
 \section{Software}
 The simulation was written in the python programming language. Freely available packages were used to simplify simulation and result analysis. A complete list of used packages and their versions can be found in the file \emph{requirements.txt}. The source code can be found under \hyperlink{https://github.com/ChillkroeteTTS/ccf-analysis-of-two-coupled-ou-processes}{https://github.com/ChillkroeteTTS/ccf-analysis-of-two-coupled-ou-processes}.
@@ -378,6 +379,9 @@ As in section \ref{s/r/overview} suggested, no difference between white and red 
 	\label{f/r/ccf_white_sym_correlation_width}
 \end{figure}
 
+\subsection{Asymmetric $\tau_1$ and $\tau_2$}
+Paramet 
+
 
 % --------------------------------------------------------------------------------------------
 \chapter{Conclusions}\label{ch/conclusion}
@@ -386,14 +390,35 @@ As in section \ref{s/r/overview} suggested, no difference between white and red 
 \chapter{Appendix}\label{ch/appendix}
 
 
+\begin{table}\label{t/a/parameterSet1}
+\begin{tabular}{ l | c | r }
+		1 & 2 & 3 \\
+		4 & 5 & 6 \\
+		7 & 8 & 9 \\
+		\hline  
+	\end{tabular}
+	\caption{\label{tab:table-name} Parameter Set 1}
+\end{table}
 
-\begin{tabular}{ l | c | r }\label{t/parameter}
-	
-	1 & 2 & 3 \\
-	4 & 5 & 6 \\
-	7 & 8 & 9 \\
-	\hline  
-\end{tabular}
+\begin{table}\label{t/a/parameterSet2}
+	\begin{tabular}{ l | c | r }
+		1 & 2 & 3 \\
+		4 & 5 & 6 \\
+		7 & 8 & 9 \\
+		\hline  
+	\end{tabular}
+	\caption{\label{tab:table-name} Parameter Set 2}
+\end{table}
+
+\begin{table}\label{t/a/parameterSet3}
+	\begin{tabular}{ l | c | r }
+		1 & 2 & 3 \\
+		4 & 5 & 6 \\
+		7 & 8 & 9 \\
+		\hline  
+	\end{tabular}
+	\caption{\label{tab:table-name} Parameter Set 1}
+\end{table}
 
 \begin{figure}[htp]
 	\includegraphics[width=1.\textwidth]{../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_acf}%

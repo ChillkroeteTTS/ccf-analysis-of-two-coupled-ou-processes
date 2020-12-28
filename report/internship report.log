@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.6.29)  16 DEC 2020 22:15
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.6.29)  28 DEC 2020 15:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -899,7 +899,14 @@ Package: xstring 2019/02/06 v1.83 String manipulations (CT)
 \c@propriete=\count159
 \c@exemple=\count160
 
-(./internship report.aux)
+(./internship report.aux
+
+LaTeX Warning: Label `tab:table-name' multiply defined.
+
+
+LaTeX Warning: Label `tab:table-name' multiply defined.
+
+)
 \openout1 = `"internship report.aux"'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 158.
@@ -916,8 +923,7 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 158.
 LaTeX Font Info:    ... okay on input line 158.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 158.
 LaTeX Font Info:    ... okay on input line 158.
-
-(/usr/local/texlive/2019/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+ (/usr/local/texlive/2019/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count161
 \scratchdimen=\dimen194
@@ -1065,38 +1071,62 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
 
 LaTeX Warning: Command \textunderscore invalid in math mode on input line 291.
 
+
+Package caption Warning: \label without proper reference on input line 393.
+See the caption package documentation for explanation.
+
+
+LaTeX Warning: Reference `t/a/parameterSet1' on page 3 undefined on input line 
+300.
+
+
+Package caption Warning: \label without proper reference on input line 403.
+See the caption package documentation for explanation.
+
+
+LaTeX Warning: Reference `t/a/parameterSet2' on page 3 undefined on input line 
+300.
+
+
+Package caption Warning: \label without proper reference on input line 413.
+See the caption package documentation for explanation.
+
+
+LaTeX Warning: Reference `t/a/parameterSet3' on page 3 undefined on input line 
+300.
+
 [3
 
 ]
-Overfull \hbox (38.44803pt too wide) in paragraph at lines 302--304
+Overfull \hbox (38.44803pt too wide) in paragraph at lines 303--305
 \T1/cmr/m/n/12 Note-books which are lo-cated un-der \T1/cmr/m/it/12 src/noteboo
 ks\T1/cmr/m/n/12 . Note-book \T1/cmr/m/it/12 src/notebooks/noise_validation.ipy
 nb
  []
 
 Package acronym Info: Label `acro:EM' newly defined as it shall be overridden
-although it is yet undefined on input line 306.
+although it is yet undefined on input line 307.
 [4] [5] [6
 
 ]
 Chapter 3.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/white_noise_acf.
-pdf, id=284, 2168.1pt x 722.7pt>
+pdf, id=291, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/white_noise
 _acf.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/white_noise_
 acf.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/white_noise_acf.pdf  used on input line 344.
+.images/white_noise_acf.pdf  used on input line 345.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/white_noise_ccf.
-pdf, id=285, 2168.1pt x 722.7pt>
+pdf, id=292, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/white_noise
 _ccf.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/white_noise_
 ccf.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/white_noise_ccf.pdf  used on input line 350.
+.images/white_noise_ccf.pdf  used on input line 351.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
@@ -1111,36 +1141,69 @@ increasing_taus_300_700_0/.images/white_noise_ccf.pdf): PDF inclusion: multiple
  pdfs with page group included in a single page
 >]
 <../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correlation_
-ou1.pdf, id=407, 2168.1pt x 722.7pt>
+ou1.pdf, id=414, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correla
 tion_ou1.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correlat
 ion_ou1.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/acf_correlation_ou1.pdf  used on input line 364.
+.images/acf_correlation_ou1.pdf  used on input line 365.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/ccf_peak_height_
-correllation.pdf, id=408, 2168.1pt x 722.7pt>
+correllation.pdf, id=415, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/ccf_peak_he
 ight_correllation.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/ccf_peak_hei
 ght_correllation.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/ccf_peak_height_correllation.pdf  used on input line 370.
+.images/ccf_peak_height_correllation.pdf  used on input line 371.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/ccf_fwahh_correl
-ation.pdf, id=409, 2168.1pt x 722.7pt>
+ation.pdf, id=416, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/ccf_fwahh_c
 orrelation.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/ccf_fwahh_co
 rrelation.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/ccf_fwahh_correlation.pdf  used on input line 376.
+.images/ccf_fwahh_correlation.pdf  used on input line 377.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
- [9 <../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correlat
-ion_ou1.pdf>] [10 <../results/params_symmetric_increasing_taus_300_700_0/.image
-s/ccf_peak_height_correllation.pdf> <../results/params_symmetric_increasing_tau
-s_300_700_0/.images/ccf_fwahh_correlation.pdf
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\tau' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `subscript' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\tau' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `subscript' on input line 382.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 382.
+
+[9 <../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correlati
+on_ou1.pdf>] [10 <../results/params_symmetric_increasing_taus_300_700_0/.images
+/ccf_peak_height_correllation.pdf> <../results/params_symmetric_increasing_taus
+_300_700_0/.images/ccf_fwahh_correlation.pdf
 
 pdfTeX warning: /Library/TeX/texbin/pdflatex (file ../results/params_symmetric_
 increasing_taus_300_700_0/.images/ccf_fwahh_correlation.pdf): PDF inclusion: mu
@@ -1154,31 +1217,31 @@ Chapter 4.
 ]
 Chapter 5.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_acf.pd
-f, id=567, 2168.1pt x 722.7pt>
+f, id=576, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_a
 cf.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_ac
 f.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/red_noise_acf.pdf  used on input line 399.
+.images/red_noise_acf.pdf  used on input line 424.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_ccf.pd
-f, id=568, 2168.1pt x 722.7pt>
+f, id=577, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_c
 cf.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/red_noise_cc
 f.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/red_noise_ccf.pdf  used on input line 405.
+.images/red_noise_ccf.pdf  used on input line 430.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 <../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correlation_
-ou2.pdf, id=571, 2168.1pt x 722.7pt>
+ou2.pdf, id=580, 2168.1pt x 722.7pt>
 File: ../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correla
 tion_ou2.pdf Graphic file (type pdf)
 <use ../results/params_symmetric_increasing_taus_300_700_0/.images/acf_correlat
 ion_ou2.pdf>
 Package pdftex.def Info: ../results/params_symmetric_increasing_taus_300_700_0/
-.images/acf_correlation_ou2.pdf  used on input line 411.
+.images/acf_correlation_ou2.pdf  used on input line 436.
 (pdftex.def)             Requested size: 460.72124pt x 153.56895pt.
 (./internship report.bbl [13 <../results/params_symmetric_increasing_taus_300_7
 00_0/.images/red_noise_acf.pdf>] [14 <../results/params_symmetric_increasing_ta
@@ -1191,60 +1254,59 @@ iple pdfs with page group included in a single page
 >]) [15
 
 ]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 429.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 429.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 454.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 454.
  (./internship report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 429.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 429.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 454.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 454.
+Package rerunfilecheck Info: File `"internship report".out' has not changed.
+(rerunfilecheck)             Checksum: A595480B18B1B45219ABDC203E7BD963;823.
 
 
-Package rerunfilecheck Warning: File `"internship report".out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
+LaTeX Warning: There were undefined references.
 
-Package rerunfilecheck Info: Checksums for `"internship report".out':
-(rerunfilecheck)             Before: F73888D5AB6886E2D577EA3AD252B897;845
-(rerunfilecheck)             After:  3ADB053614A6C5069BA9A9B42B89853F;751.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 429.
+
+LaTeX Warning: There were multiply-defined labels.
+
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 454.
  ) 
 Here is how much of TeX's memory you used:
- 31760 strings out of 492609
- 758962 string characters out of 6129048
- 962834 words of memory out of 5000000
- 35005 multiletter control sequences out of 15000+600000
- 25341 words of font info for 71 fonts, out of 8000000 for 9000
+ 31778 strings out of 492609
+ 759257 string characters out of 6129048
+ 963124 words of memory out of 5000000
+ 35019 multiletter control sequences out of 15000+600000
+ 28581 words of font info for 81 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  78i,12n,136p,742b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 pdfTeX warning (dest): name{https://github.com/ChillkroeteTTS/ccf-analysis-of
 -two-coupled-ou-processes} has been referenced but does not exist, replaced by 
 a fixed one
 
-pdfTeX warning (dest): name{subsection.3.2.1} has been referenced but does not 
-exist, replaced by a fixed one
-
 {/usr/local/texlive/2019/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</
 usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></u
 sr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></us
 r/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/
 local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/lo
-cal/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/loca
-l/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/t
-exlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/te
-xlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texl
-ive/2019/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texliv
-e/2019/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/
-2019/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/20
-19/texmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb></usr/local/texlive/2019
-/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/local/texlive/2019/t
-exmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2019/tex
-mf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2019/texmf
--dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2019/texmf-d
-ist/fonts/type1/public/cm-super/sfti1200.pfb></usr/local/texlive/2019/texmf-dis
-t/fonts/type1/public/cm-super/sfti1440.pfb>
-Output written on "internship report.pdf" (23 pages, 488532 bytes).
+cal/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loca
+l/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/
+texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/tex
+live/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texl
+ive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texliv
+e/2019/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/
+2019/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/20
+19/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2019
+/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2019/t
+exmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb></usr/local/texlive/2019/tex
+mf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/local/texlive/2019/texmf
+-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2019/texmf-d
+ist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2019/texmf-dis
+t/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2019/texmf-dist/
+fonts/type1/public/cm-super/sfti1200.pfb></usr/local/texlive/2019/texmf-dist/fo
+nts/type1/public/cm-super/sfti1440.pfb>
+Output written on "internship report.pdf" (23 pages, 510259 bytes).
 PDF statistics:
- 816 PDF objects out of 1000 (max. 8388607)
- 437 compressed objects within 5 object streams
- 75 named destinations out of 1000 (max. 500000)
+ 831 PDF objects out of 1000 (max. 8388607)
+ 450 compressed objects within 5 object streams
+ 78 named destinations out of 1000 (max. 500000)
  162 words of extra memory for PDF output out of 10000 (max. 10000000)
 
