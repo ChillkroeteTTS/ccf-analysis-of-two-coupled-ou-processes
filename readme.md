@@ -11,13 +11,13 @@ A working Python3 environment is assumed.
 ####  Dependency Installation
 ``pip3 install -r requirements.txt``
 
-### Simulation Start
+#### Simulation Start
 Parameter set selection can be done in the function `calc_and_save()` in `src/main_multiple_runs.py`.
 
 Start simulation:
 ```python3 src/main_multiple_runs.py```
 
-### Result Analysation and Plotting
+#### Result Analysation and Plotting
 The simulation results are saved in the folder `results`.
 Plots are created manually in the Jupyter Notebooks in `src/notebooks`.
 
