@@ -67,12 +67,13 @@ def run_ou_process_realization(R, T_cycles, T_interval, tau1, tau2, e, noise_typ
     :return:
         Dataframe containing all time series relevant for both processes as well as the processes themself
     """
-    noise_fn = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
-    res_ou1 = ou(T_interval, tau1, noise_fn, initial_condition)
+    noise1_fn = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma1'])
+    noise2_fn = white_noise if noise_type['type'] == NoiseType.WHITE else functools.partial(red_noise, noise_type['gamma2'])
+    res_ou1 = ou(T_interval, tau1, noise1_fn, initial_condition)
     ou1 = res_ou1[:, 2]
     noise1 = res_ou1[:, 1]
 
-    mixed_noise_fn = build_mixed_noise_fn(T_interval, noise_fn, noise1, R, T_cycles, e)
+    mixed_noise_fn = build_mixed_noise_fn(T_interval, noise2_fn, noise1, R, T_cycles, e)
 
     res_ou2 = ou(T_interval, tau2, mixed_noise_fn, initial_condition)
     ou2 = res_ou2[:, 2]

@@ -20,7 +20,7 @@ def red_noise(r: float, n: int, delta_t: float) -> List[float]:
 
 
 def build_mixed_noise_fn(t_interval: List[float],
-                         noiseFn: Callable[[int ,float], float],
+                         noise2Fn: Callable[[int , float], float],
                          noise1,
                          R: int,
                          T_cycles: int,
@@ -31,7 +31,7 @@ def build_mixed_noise_fn(t_interval: List[float],
     # t_0--------t1-------t_total
     # |--noise1--|--mixed noise--|
     :param t_interval: Simulation period
-    :param noiseFn: Function creating noise increments
+    :param noise2Fn: Function creating noise increments
     :param noise1: Noise increments of first OU process
     :param R: Resolution
     :param T_cycles: How many times the delay period is repeated
@@ -46,7 +46,7 @@ def build_mixed_noise_fn(t_interval: List[float],
         t_mixed = t_interval[i_t_1:]
         pow_e = np.power(e, 2.0)
 
-        noise2 = noiseFn(n, delta_t)
+        noise2 = noise2Fn(n, delta_t)
 
         # Noise 1 in interval t0 - t1
         noise_t0_t1 = noise1[:i_t_1]

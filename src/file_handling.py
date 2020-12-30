@@ -28,7 +28,8 @@ def write_simulations_to_disk(result_path, results, raw_ensemble_fields=[]):
 
         for f in raw_ensemble_fields:
             index = simulation['ensemble']['ou1_median'].index
-            pd.DataFrame({str(k): sim[f] for k, sim in enumerate(simulation['raw_ensemble'])}, index=index).to_csv(simulation_dir / f'{f}_raw_ensemble.csv', index=True, index_label='offset')
+            pd.DataFrame({str(k): sim[f] for k, sim in enumerate(simulation['raw_ensemble'])}, index=index).to_csv(
+                simulation_dir / f'{f}_raw_ensemble.csv', index=True, index_label='offset')
 
 
 def generate_simulation_dir(result_path, p):
@@ -41,21 +42,28 @@ def generate_simulation_dir(result_path, p):
     return result_path / f'{noise_type}_{e}_{t1}_{t2}_{gamma1}_{gamma2}'
 
 
-def load_ensemble(base_path: Path) -> Tuple[List[SimulationResults], List[float] ,List[float], List[float]]:
+def load_ensemble(base_path: Path) -> Tuple[List[SimulationResults], List[float], List[float], List[float]]:
     parse_steps_e = lambda dir: float(dir.split('_')[1])
     parse_steps_tau1 = lambda dir: float(dir.split('_')[2])
     parse_steps_tau2 = lambda dir: float(dir.split('_')[3])
-    ensembles = 'params_symmetric_increasing_taus_300_700_0'.split('_')[4]
-    R = 'params_symmetric_increasing_taus_300_700_0'.split('_')[5]
+    parse_steps_gamma1 = lambda dir: float(dir.split('_')[4])
+    parse_steps_gamma2 = lambda dir: float(dir.split('_')[5])
+    ensembles = str(base_path).split('_')[4]
+    R = str(base_path).split('_')[5]
 
     meta = np.array([[load_simulation_result(base_path, simulation_dir), parse_steps_e(simulation_dir),
-              parse_steps_tau1(simulation_dir), parse_steps_tau2(simulation_dir)] for simulation_dir in
-             os.listdir(base_path) if not simulation_dir.startswith('.')], dtype="object")
+                      parse_steps_tau1(simulation_dir), parse_steps_tau2(simulation_dir),
+                      parse_steps_gamma1(simulation_dir), parse_steps_gamma2(simulation_dir)
+                      ]
+                     for simulation_dir in
+                     os.listdir(base_path) if not simulation_dir.startswith('.')], dtype="object")
     results = meta[:, 0]
     steps = sorted(list(set(meta[:, 1])))
     steps_tau1 = sorted(list(set(meta[:, 2])))
     steps_tau2 = sorted(list(set(meta[:, 3])))
-    return results, steps, steps_tau1, steps_tau2, ensembles, R
+    steps_gamma1 = sorted(list(set(meta[:, 4])))
+    steps_gamma2 = sorted(list(set(meta[:, 5])))
+    return results, steps, steps_tau1, steps_tau2, steps_gamma1, steps_gamma2, ensembles, R
 
 
 def load_simulation_result(base_path, simulation_dir, raw_ensemble_fields=[]):

@@ -148,16 +148,20 @@ def plt_time_series(params, ts, ys, title, subTitleFn=standart_title, labels=[],
     fig.show()
 
 
-def plt_correlation(results, steps_x, steps_y,
+def plt_correlation(results,
+                    steps_x,
+                    steps_y,
                     yFn,
                     title='',
                     plt_red=True,
                     get_x=lambda p: p['e'],
                     get_y=lambda p: p['tau1'],
                     ylabel = '$\\tau$',
-                    xlabel='$\epsilon$'
+                    xlabel='$\epsilon$',
+                    noise_type=NoiseType.WHITE,
+                    hide_label=False
                     ):
-    z_white = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.WHITE
+    z_white = [[yFn([r for r in results if r['p']['noiseType']['type'] == noise_type
                                 and math.isclose(get_x(r['p']), x)
                                 and math.isclose(get_y(r['p']), y)
                                 ][0]) for x in steps_x] for y in steps_y]
@@ -174,7 +178,9 @@ def plt_correlation(results, steps_x, steps_y,
     levels = np.linspace(vmin, vmax, 12)
     map = ax1.contour(steps_x, steps_y, z_white, levels=levels)
     ax1.scatter([e for e in steps_x for tau in steps_y], [tau for e in steps_x for tau in steps_y], marker='x')
-    ax1.set(title='white noise', xlabel=xlabel, ylabel=ylabel)
+    ax1.set(title='' if hide_label else ('white noise' if results[0]['p']['noiseType']['type'] == NoiseType.WHITE else 'red noise'),
+                xlabel=xlabel,
+                ylabel=ylabel)
 
     if plt_red:
         z_red = [[yFn([r for r in results if r['p']['noiseType']['type'] == NoiseType.RED
@@ -184,7 +190,7 @@ def plt_correlation(results, steps_x, steps_y,
         xx, yy = np.meshgrid(steps_x, steps_y)
         map = axs[1].contour(steps_x, steps_y, z_red, levels=levels, extend='min')
         axs[1].scatter([x for x in steps_x for y in steps_y], [y for x in steps_x for y in steps_y], marker='x')
-        axs[1].set(title='red noise', xlabel=xlabel, ylabel=ylabel)
+        axs[1].set(title='' if hide_label else 'red noise', xlabel=xlabel, ylabel=ylabel)
 
     plt.colorbar(map)
     fig.suptitle(title)

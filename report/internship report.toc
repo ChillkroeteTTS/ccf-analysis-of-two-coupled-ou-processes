@@ -1,14 +1,14 @@
 \babel@toc {english}{}
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}% 
-\contentsline {section}{\numberline {1.1}Model Definition}{1}{section.1.1}% 
+\contentsline {section}{\numberline {1.1}Model Definition}{2}{section.1.1}% 
 \contentsline {section}{\numberline {1.2}Parameter Under Study}{2}{section.1.2}% 
 \contentsline {chapter}{\numberline {2}Methodology}{3}{chapter.2}% 
 \contentsline {section}{\numberline {2.1}Software}{4}{section.2.1}% 
 \contentsline {section}{\numberline {2.2}Numerical Integration}{4}{section.2.2}% 
 \contentsline {section}{\numberline {2.3}Behavior of Mixed Noise for t < T}{5}{section.2.3}% 
-\contentsline {chapter}{\numberline {3}Results}{7}{chapter.3}% 
-\contentsline {section}{\numberline {3.1}Estimated ACFs and CCFs of Simulated Processes}{7}{section.3.1}% 
+\contentsline {chapter}{\numberline {3}Results}{6}{chapter.3}% 
+\contentsline {section}{\numberline {3.1}Estimated ACFs and CCFs of Simulated Processes}{6}{section.3.1}% 
 \contentsline {section}{\numberline {3.2}Correlation between ACF/CCF Behavior and Parameterization}{9}{section.3.2}% 
-\contentsline {subsection}{\numberline {3.2.1}Asymmetric $\tau _1$ and $\tau _2$}{9}{subsection.3.2.1}% 
-\contentsline {chapter}{\numberline {4}Conclusions}{11}{chapter.4}% 
-\contentsline {chapter}{\numberline {5}Appendix}{13}{chapter.5}% 
+\contentsline {subsection}{\numberline {3.2.1}Asymmetric values for $\tau _1$/$\tau _2$ and $\gamma _1$/$\gamma _2$}{9}{subsection.3.2.1}% 
+\contentsline {chapter}{\numberline {4}Conclusions}{17}{chapter.4}% 
+\contentsline {chapter}{\numberline {5}Appendix}{18}{chapter.5}% 
