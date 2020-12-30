@@ -22,7 +22,7 @@ The simulation results are saved in the folder `results`.
 Plots are created manually in the Jupyter Notebooks in `src/notebooks`.
 
 Start Jupyter lab to use notebooks:
-```python3 jupyter lab```
+```jupyter lab```
 
 Relevant notebooks are
 - noise_validation.ipynb
